@@ -1,13 +1,17 @@
-% hidelinks remove colour boxes around hyperlinks
-
 \documentclass[thesis=M,english,hidelinks]{FITthesis}[2012/10/20]
 
-\usepackage[utf8]{inputenc} % LaTeX source encoded as UTF-8
-
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{PTSansNarrow}
-\usepackage{paratype}
-% \linespread{1.3}
+
+% TYPOGRAPHY
+\usepackage[lf]{venturis}
+\usepackage{PTSans}
+
+\linespread{1.1}
+
+\setsecheadstyle{\normalfont\LARGE\sffamily}
+% \setsubsecheadstyle{\large\scshape\raggedright}
+% \setsubsubsecheadstyle{\normalsize\scshape\raggedright}
 
 \usepackage{graphicx}
 % \usepackage{subfig} %subfigures
@@ -17,17 +21,13 @@
 % % list of acronyms
 % \usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
 
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-% EDIT THIS
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-\department{Department of \ldots (SPECIFY)}
+\department{Department of Software Engineering}
 \title{Thesis title (SPECIFY)}
-\authorGN{Your Given Name(s) (SPECIFY)} %author's given name/names
-\authorFN{Your Family Name (surname, SPECIFY)} %author's surname
-\author{Your Name (SPECIFY)} %author's name without academic degrees
-\authorWithDegrees{Your Name \& degrees} %author's name with academic degrees
-\supervisor{Your Supervisor's Name (SPECIFY)}
+\authorGN{Adam}
+\authorFN{Havel}
+\author{Adam Havel}
+\authorWithDegrees{Bc. Adam Havel}
+\supervisor{doc. Ing. Tomáš Vitvar, Ph.D.}
 \acknowledgements{THANKS}
 \abstractEN{Summarize the contents and contribution of your work in a few sentences in English language.}
 \abstractCS{V n{\v e}kolika v{\v e}t{\' a}ch shr{\v n}te obsah a p{\v r}{\' i}nos t{\' e}to pr{\' a}ce v {\v c}esk{\' e}m jazyce.}
@@ -35,7 +35,6 @@
 \keywordsCS{Replace with comma-separated list of keywords in Czech.}
 \keywordsEN{Replace with comma-separated list of keywords in English.}
 \declarationOfAuthenticityOption{1} %select as appropriate, according to the desired license (integer 1-6)
-
 
 \begin{document}
 
