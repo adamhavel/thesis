@@ -4,14 +4,17 @@
 \usepackage[T1]{fontenc}
 
 % TYPOGRAPHY
-\usepackage[lf]{venturis}
+% \usepackage[ttdefault=true]{AnonymousPro}
+\usepackage{tgpagella}
 \usepackage{PTSans}
 
-\linespread{1.1}
+\linespread{1.3}
 
 \setsecheadstyle{\normalfont\LARGE\sffamily}
 % \setsubsecheadstyle{\large\scshape\raggedright}
 % \setsubsubsecheadstyle{\normalsize\scshape\raggedright}
+
+\newcommand{\code}{\texttt}
 
 \usepackage{graphicx}
 % \usepackage{subfig} %subfigures
@@ -19,7 +22,7 @@
 \usepackage{dirtree}
 
 % % list of acronyms
-% \usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
+% %\usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
 
 \department{Department of Software Engineering}
 \title{Thesis title (SPECIFY)}
@@ -36,10 +39,9 @@
 \keywordsEN{Replace with comma-separated list of keywords in English.}
 \declarationOfAuthenticityOption{1} %select as appropriate, according to the desired license (integer 1-6)
 
+
 \begin{document}
 
-% \newacronym{CVUT}{{\v C}VUT}{{\v C}esk{\' e} vysok{\' e} u{\v c}en{\' i} technick{\' e} v Praze}
-% \newacronym{FIT}{FIT}{Fakulta informa{\v c}n{\' i}ch technologi{\' i}}
 
 \setsecnumdepth{part}
 \chapter{Introduction}
@@ -48,22 +50,19 @@ Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dolor
 
 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure \cite{rybicka} reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
 
-\section{Temperovaná ladění}
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure \cite{rybicka} reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
-
 \setsecnumdepth{all}
-\chapter{State-of-the-art}
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure \cite{rybicka} reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
-
-\section{Temperovaná ladění}
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure \cite{rybicka} reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
-
-\chapter{Analysis and design}
 
 \chapter{Realisation}
+
+\section{Authentication}
+
+No part of the system is accessible without an authentication. Upon loading,
+the client makes a \textit{GET} request to a resource defined at \code{/api/user} and appends a session identifier if a cookie is found. The server then tries to lookup the identifier in a MongoDB-backed session store. If successful, it checks whether the session has not expired---if that is not the case, it sends the client back a \textit{JSON} object containing information about the particular user. The information is obtained by deserializing the user identifier from the session and using that to fetch relevant data from the database. The client application then fills its \code{User} service with the received object and the user is allowed to continue as authenticated.
+
+In the opposite case---no session was found or it has already expired---the server responds with a 401 status code which forces the client to redirect
+the user to a page containing login form. After filling the form, the client makes a new request to the \code{api/user} resource, this time using the \textit{POST} method, sending along the user's credentials. These credentials are then checked against a faculty \textit{LDAP} server running at \code{ldap.fit.cvut.cz} using a secure connection. If the identity is verified, the \textit{LDAP} server responds with basic information about the user. Back at the application server, the database is queried with the user identifier for additional data. It either finds a relevant entry or not. In the first case, the entry is updated with a new timestamp, representing the time of the last login, and the server sends it to the client as a \textit{JSON} object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
+
+A new instance of \code{User} model is then created and filled with the available data. What remains unknown is the user's role---that is, if he or she is a student or a teacher. That information can be obtained by making a request to \textit{KOSapi}, a faculty service that provides a \textit{REST API} over the university information system \textit{KOS}. To find out the role of a person with a given user identifier we can use the resource \code{/people/\{uid\}}. With that issue resolved, we can continue by looking up all courses the user either studies or teaches by using the resources \code{/students/\{uid\}/enrolledCourse} and \code{/teachers/\{uid\}/courses}, respectively.
 
 \setsecnumdepth{part}
 \chapter{Conclusion}
@@ -76,9 +75,12 @@ Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dolor
 \appendix
 
 \chapter{Acronyms}
+
 \begin{description}
-   \item[GUI] Graphical user interface
-   \item[XML] Extensible markup language
+   \item[API] Application Programming Interface
+   \item[JSON] JavaScript Object notation
+   \item[LDAP] Lightweight Directory Access Protocol
+   \item{REST} Representational State Transfer
 \end{description}
 
 
