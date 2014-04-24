@@ -72,6 +72,10 @@ When the user logs out, the \code{User} service is unset and the client sends a 
 
 The response code 401 is also reserved for the situation when a user is not authorized to view a selected resource. This applies for example in the case when a user with the student role requests a different student's results. Nevertheless, such request is never made on behalf of the client application. It can only occur when the user tries to reach the server resource directly, via the provided API.
 
+\section{Blueprints}
+
+A blueprint represent what in real life would be the original copy of a written test. In the application, blueprints can be created, viewed and modified until the day of the exam. All of these operations are obviously restricted for all users except those holding the role of teacher. And even those are allowed to manage only the blueprints that belong to the courses they teach. The
+
 
 \setsecnumdepth{part}
 \chapter{Conclusion}
