@@ -1,5 +1,7 @@
 \documentclass[thesis=M,english,hidelinks]{FITthesis}[2012/10/20]
 
+
+
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
@@ -8,7 +10,11 @@
 \usepackage{tgpagella}
 \usepackage{PTSans}
 
-\linespread{1.3}
+% \DisemulatePackage{setspace}
+% \usepackage{setspace}
+% \onehalfspacing
+
+\OnehalfSpacing
 
 \setsecheadstyle{\bfseries\LARGE\sffamily}
 \setsubsecheadstyle{\bfseries\large\sffamily}
@@ -16,7 +22,46 @@
 
 \newcommand{\code}{\texttt}
 
+\definecolor{red}{HTML}{a31422}
+\definecolor{green}{HTML}{00894e}
+\definecolor{darkgray}{HTML}{3e3e3e}
+\definecolor{gray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+
+\usepackage{listings}
+\lstset{
+  basicstyle=\footnotesize\ttfamily\color{gray},
+  breaklines=true,
+  frame=lines,
+  framexleftmargin=\parindent,
+  framexrightmargin=\parindent,
+  framextopmargin=\baselineskip,
+  framexbottommargin=\baselineskip,
+  aboveskip=\baselineskip,
+  showspaces=false,
+  showstringspaces=false,
+  framerule=0.2pt
+}
+
+\lstdefinelanguage{JavaScript} {
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, var, void, while, with},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  keywordstyle=\color{red},
+  ndkeywordstyle=\color{darkgray},
+  identifierstyle=\color{darkgray},
+  commentstyle=\color{purple},
+  stringstyle=\color{green},
+  sensitive=true
+}
+
+\usepackage{float}
+
 \usepackage{graphicx}
+\graphicspath{{img/}}
 % \usepackage{subfig} %subfigures
 
 \usepackage{dirtree}
@@ -42,7 +87,6 @@
 
 \begin{document}
 
-
 \setsecnumdepth{part}
 \chapter{Introduction}
 
@@ -50,25 +94,65 @@
 
 \chapter{Realisation}
 
+The core of the application lies in the so called services which are objects that are used to organize code into logical units and wired together using dependency injections to create new functionality. They are built upon services already present in Angular like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
+
+Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, so that it can provide information about their state to users. That is the reason most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on a user's role. That is why we want to know the role before we start creating instances of services a user might not be able to use anyway. Since the majority of the services also create event listeners, they would only pose as a potential memory hog.
+
+This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. If a user successfully authenticates, it emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
+
 \section{Authentication}
 
-No part of the system is accessible without authentication. Upon loading, the client makes a \code{GET} request to a resource defined at \code{/api/user} and appends a session identifier if a cookie is found. The server then tries to look up the identifier in MongoDB-backed session store. If successful, it checks whether the session has not expired---if that is not the case, it sends the client a \textit{JSON} object containing information about the particular user. The information is obtained by deserializing the user identifier from the session and using it to fetch relevant data from the database. The client application then fills its \code{User} service with the received object and the user is onward recognized as authenticated.
+No part of the system is accessible without authentication. Upon loading, the client makes a \code{GET} request to a resource defined at \code{/api/user} and appends a session identifier if a cookie is found. The server then tries to look up the identifier in MongoDB-backed session store. If successful, it checks whether the session has not expired---if that is not the case, it sends the client a JSON object containing information about the particular user. The information is obtained by deserializing the user identifier from the session and using it to fetch relevant data from the database. The client application then fills its \code{User} service with the received object and the user is onward recognized as authenticated.
 
 \subsection{Logging in}
 
-In the opposite case---either no session was found or it has already expired---the server responds with a 401 status code which forces the client to redirect the user to a login form page. After filling in the form, the client makes a new request to the \code{api/user} resource, this time using the \code{POST} method, sending along user credentials. These credentials are then checked against a faculty \textit{LDAP} server running at \code{ldap.fit.cvut.cz} using a secure connection. If user's identity is verified, the \textit{LDAP} server responds with basic information about the user. Back at the application server, the database is queried with the user identifier for additional data. It either finds a relevant entry or not. In the former case, the entry is updated with a new timestamp, representing the last login time, and the server sends it to the client as a \textit{JSON} object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
+In the opposite case---either no session was found or it has already expired---the server responds with a 401 status code which forces the client to show the user to a login form. After filling in the form, the client makes a new request to the \code{api/user} resource, this time using the \code{POST} method, sending along user credentials. These credentials are then checked against a faculty LDAP server running at \code{ldap.fit.cvut.cz} using a secure connection. If user's identity is verified, the LDAP server responds with basic information about the user. Back at the application server, the database is queried for additional data using the user identifier. It either finds a relevant entry or not. In the former case, the entry is updated with a new timestamp, representing the last login time, and the server sends it to the client as a JSON object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
 
-A new instance of \code{User} model is then created and filled with the available data. What remains unknown is the user's role---that is, if he or she is a student or a teacher. That information can be obtained by making a request to \textit{KOSapi}, a faculty service that provides a \textit{REST API} over the university information system \textit{KOS}. To find out the role of a person with a given user identifier we can utilize the resource \code{/people/\{uid\}}. With that issue resolved, we can continue by looking up all courses the user either studies or teaches by using the resources \code{/students/\{uid\}/enrolledCourses} and \code{/teachers/\{uid\}/courses}, respectively. It is worth noting that \textit{KOSapi} returns the data formatted as \textit{XML}, which means the server has to transform it into a \textit{JSON} object using an external library called \textit{x2js}. After obtaining all the neccessary data, the new user can finally be saved in the database and sent to the client.
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{test.png}}
+  \caption{Login form}
+  \label{fig:login_form}
+\end{figure}
+
+A new instance of \code{User} model is then created and filled with the available data. What remains unknown is the user's role---that is, if he or she is a student or a teacher. That information can be obtained by making a request to \textit{KOSapi}, a faculty service that provides a REST API over the university information system \textit{KOS}. To find out the role of a person with a given user identifier we can utilize the resource \code{/people/\{uid\}}. With that issue resolved, we can continue by looking up all courses the user either studies or teaches by using the resources \code{/students/\{uid\}/enrolledCourses} and \code{/teachers/\{uid\}/courses}, respectively. It is worth noting that \textit{KOSapi} returns the data formatted as XML, which means the server has to transform it into a JSON object, for which it uses an external library called \textit{x2js}. After obtaining all the neccessary data, the new user can finally be saved in the database and sent to the client.
 
 But since both the role and the subjects of a user can change, the server has to periodically request the current states of the aforementioned resources and make neccessary changes in the application database. This is one of the reasons the last login time is saved in the \code{User} model---using this information, the server makes sure not to ask for new data more than once a day. And since the majority of these changes occur at the start of a semester, long before any exam takes place, it should be frequent enough for most cases.
 
 \subsection{Client-side verification}
 
-When the client receives the authentication data and stores it in the appropriate service, the user can start to use the application with the scope assigned to his role. Whenever he navigates to a different state an event listener checks whether the \code{User} service is properly set. If it is empty, the user is redirected to a login form page and any navigation elsewhere is disabled until he successfully logs in. The authentication is thus verified only via the client-side service which might not be up to date with the server. This is sufficient for some operations and serves to mitigate any latency that would arise from communication between the client and the server.
+When the client receives the authentication data and stores it in the appropriate service, the user can start to use the application with the scope assigned to his role. If for some reason the \code{User} service gets unset again, the user is shown a login form and any navigation elsewhere is disabled until he successfully logs in. In this manner, the authentication is verified only via the client-side service which might not be up to date with the server. This is sufficient for some operations and serves to mitigate any latency that would arise from communication between the client and the server.
 
-When the user logs out, the \code{User} service is unset and the client sends a \code{DELETE} request to the \code{/api/user} resource which prompts the server to discard the session. Nonetheless, the client session might also be terminated at the server end, either by force or because it has expired. It is therefore neccessary that the client recognizes this situation and acts accordingly. This is ensured by using a HTTP interception service that monitors every response the client receives from the server when it tries to reach a resource. In case the response contains a status code of 401, it means the user is not authenticated and is then redirected to a login form page.
+If the user logs out, the \code{User} service is emptied and the client sends a \code{DELETE} request to the \code{/api/user} resource which prompts the server to discard the session. Nonetheless, the client session might also be terminated at the server end, either by force or because it has expired. It is therefore neccessary that the client recognizes this situation and acts accordingly. This is ensured by using a HTTP interception service that monitors every response the client receives from the server when it tries to reach a resource. Whenever a 401 status code shows up, it means the session has been ended and the user has to authenticate again if he wishes to continue.
 
-Similar situation occurs when a user is not authorized to view a selected resource. This applies for example in the case when a user with the role of a student requests a different student's results. When such a thing happens, the server responds with a status code 403. Nevertheless, such request is never made on behalf of the client application and can only occur when the user tries to reach the server resource directly, via the provided API. That is why we do not have to handle this problem on the client side.
+\begin{figure}[h]
+  \begin{lstlisting}[language=JavaScript]
+app.factory('AuthInterceptor', function($q, $injector, Modal) {
+
+  return {
+    'response': function(response) {
+      if (response.status === 401 && $injector.get('User').data) {
+        Modal.open('alert', 'Your session has been ended. You will have to authenticate.', null, 'Log in');
+        $injector.get('User').logout();
+        return $q.reject(response);
+      } else {
+        return response || $q.when(response);
+      }
+    }
+  };
+
+}).config(function($httpProvider) {
+  $httpProvider.interceptors.push('AuthInterceptor');
+});
+  \end{lstlisting}
+  \caption{HTTP Interceptor}
+  \label{fig:http_interceptor}
+\end{figure}
+
+The HTTP interceptor can be seen in the figure \ref{fig:http_interceptor}. It requires the \code{User} service so that it can tell whether a user is present and to log him out if neccessary. In any other type of component, the \code{User} service would be injected normally, but that is unfortunately not possible in this scenario. The problem arises from the fact that injecting a service into another component makes it dependent on that service. And since the \code{User} service is already dependent on \code{\$http} and applying the interceptor esentially modifies the instance of the very same \code{\$http}, making \code{\$http} dependent on the \code{User} service through the interceptor would create what is called a circular dependence. That can be remedied by using the built-in \code{\$injector} service which is able to get hold of another service reference without creating a dependance.
+
+Something similar to the 401-filled responses also occurs when a user is not authorized to view a selected resource. This applies for example in the case when a user with the role of a student requests a different student's results. When such a thing happens, the server responds with a status code 403. Nevertheless, such request is never made on behalf of the client application and can only occur when the user tries to reach the server resource directly, via the provided API. That is why we do not have to handle this problem on the client side.
 
 \section{Blueprints}
 
@@ -76,7 +160,9 @@ A blueprint represent what in real life would be the original copy of a written 
 
 \subsection{Resources}
 
-The blueprints are exposed as two resources, each of them designed for different use. The first one represents a collection of blueprints and is accessible via \code{/api/blueprints}. It supports optional query parameters for filtering by subject, date and language. When no subject is specified, the result is automatically filtered using the list of subjects contained in the \code{User} service. If, on the other hand, a subject is given, it is tested against the same list and if no match is found, the server responds with a 403 code. Otherwise, the query is passed along. In the end, the resource returns a collection of all the blueprints in the database that satisfy the inherent or supplied conditions. Anyhow, the view on the collection is shallow, meaning only identifiers of a blueprint are returned, not an actual content. Since on the client side the resource is used only for listings, anything more than that would be a waste of bandwidth. For these reasons, it responds only to request of the \code{GET} type.
+The blueprints are exposed as two resources, each of them designed for different use. The first one represents a collection of blueprints and is accessible via \code{/api/blueprints}. It supports optional query parameters for filtering by subject, date and language. When no subject is specified, the result is automatically filtered using the list of subjects contained in the \code{User} service. If, on the other hand, a subject is given, it is tested against the same list and if no match is found, the server responds with a 403 code. Otherwise, the query is passed along.
+
+In the end, the resource returns a collection of all the blueprints in the database that satisfy the inherent or supplied conditions. Anyhow, the view on the collection is shallow, meaning only identifiers of a blueprint are returned, not an actual content. Since on the client side the resource is used only for listings, anything more than that would be a waste of bandwidth. For these reasons, it responds only to request of the \code{GET} type.
 
 The other resource is used for operations dealing with a particular blueprint and can be found at URI \code{api/blueprint/\{subject\}/\{date\}/\{language\}}. Note that the variables are not optional and must be validated before any further processing, otherwise the server returns an error. The subject must be a valid subject code---starting with either \code{MI} or \code{BI} depending on the level of the subject, followed by a hyphen and ending with three word characters. The date must represent a string formatted as \code{YYYY-MM-DDThh:mm}, for example \code{2014-04-25T07:51}, and the language is validated against the standard \textit{ISO 639-1} which allows only codes like \code{en} or \code{cs}.
 

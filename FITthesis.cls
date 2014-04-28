@@ -42,6 +42,7 @@
 
 \RequirePackage{babel}[2008/07/06]
 \RequirePackage{hyperref}
+\RequirePackage{xcolor}
 
 \RequirePackage{chngcntr}
 \counterwithout*{footnote}{chapter}
