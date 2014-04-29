@@ -18,7 +18,7 @@
 
 \setsecheadstyle{\bfseries\LARGE\sffamily}
 \setsubsecheadstyle{\bfseries\large\sffamily}
-% \setsubsubsecheadstyle{\normalsize\scshape\raggedright}
+\setsubsubsecheadstyle{\bfseries\normalsize\sffamily}
 
 \newcommand{\code}{\texttt}
 
@@ -92,7 +92,33 @@
 
 \setsecnumdepth{all}
 
+\chapter{Analysis}
+
 \chapter{Realisation}
+
+  \section{Server}
+
+    \subsection{Architecture}
+
+      \subsubsection{Structure}
+
+    \subsection{Database}
+
+    \subsection{Internal communication}
+
+      \subsubsection{API}
+
+      \subsubsection{Websockets}
+
+\section{Client}
+
+  \subsection{Architecture}
+
+    \subsubsection{Structure}
+
+    \subsubsection{Routing}
+
+    \subsubsection{Services}
 
 The core of the application lies in the so called services which are objects that are used to organize code into logical units and wired together using dependency injections to create new functionality. They are built upon services already present in Angular like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
@@ -100,11 +126,39 @@ Much of the core functionality is handled by aptly named services such as \code{
 
 This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. If a user successfully authenticates, it emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
-\section{Authentication}
+    \subsubsection{Directives}
+
+  \subsection{Optimalisation}
+
+    \subsubsection{Task automation}
+
+  \subsection{Graphical user interface}
+
+    \subsubsection{Design}
+
+Taking the proposed use of the application into account, it is crucial to embrace the idea that the design might actually be the most important aspect of the product and also the ultimate measure of its reach and usefulness. And when talking about design, we mean not just the aesthetics, of course, but also the whole field of user experience and usability. It is no secret that dealing with a poorly designed product can actually become a source of stress by itself. Or just a very unpleaseant experience at best. The situation one finds himself in while trying to use such application usually only helps to heighten this feeling---and taking an exam can be quite gruelling as it is, as anyone can attest. Forcing students to use an application that is hard or simply obnoxious to use would epitomize nothing more than a major tell-tale sign of bad decision-making at every level of the design process.
+
+As Dieter Rams once famously stated in his ten principles for good design (sometimes understandably referred to as the ``Ten commandments''), ``good design is as little design possible.'' And even though Rams dealt mostly with product design, the statement is applicable everywhere. Less, but better---such design can concentrate on the essential aspects and not burden the product with non-essentials. In recent years, this minimalist approach has once again proved to be in good health when the so called ``flat'' design seized the reigns of user interface design everywhere. The reason it is referred to as flat is because it removes any stylistic choices that give the illusion of three-dimensions (such as drop shadows, gradients, or textures) and is focused on simple elements, typography and primary colors.
+
+In opposition to flat design lies what is called skeuomorphism. Esentially any interface that uses ornamental cues referring to an object in the physical world is said to be skeuomorphic. These cues are intended to help the user navigate the interface by creating a sense of familiarity. Among the many arguments against skeuomorphic design are those which states that skeuomorphic interface elements use metaphors that are more difficult to operate and take up more screen space than standard interface elements or that many users may have no experience with the original device being emulated. Prevalent is also the opinion that such design limits creativity by grounding the experience to physical counterparts.
+
+Valid or not, these arguments helped pave the way for the domination of flat design. One does not have to look far for evidence---take for example the design of \textit{Windows 8} and compare it to previous versions. Then do the same with \textit{iOS 7}. The trend's existence is indisputable---but it is the author's belief that as with any trend, it is best not to get carried away and trust one's judgement first. It is undeniable that flat design allowed interface designs to be more streamlined and efficient, to quickly convey information while still looking visually appealing and approachable. But when used without questions and reservation, it can actually obfuscate the meaning behind an element.
+
+This is what Dieter Rams was talking about when he said that good design makes a product understandable. Take for example an element representing a button. If we blindly followed the principles of flat design (which many do), the element's visual identity would fall apart. But say we add a simple drop shadow---the metaphor then holds and so does the streamlined aesthetics. The points is that the button does not have to look exactly like a button to be recognized as one. Just give the user a cue and his mind will do the rest.
+
+The same applies for an input element---the user expects the element to have at least slight inset drop shadow and is confused if not . This has been proven time and again by many usability studies.
+
+    \subsubsection{Typography}
+
+    \subsubsection{Performance}
+
+\chapter{Processes}
+
+  \section{Authentication}
 
 No part of the system is accessible without authentication. Upon loading, the client makes a \code{GET} request to a resource defined at \code{/api/user} and appends a session identifier if a cookie is found. The server then tries to look up the identifier in MongoDB-backed session store. If successful, it checks whether the session has not expired---if that is not the case, it sends the client a JSON object containing information about the particular user. The information is obtained by deserializing the user identifier from the session and using it to fetch relevant data from the database. The client application then fills its \code{User} service with the received object and the user is onward recognized as authenticated.
 
-\subsection{Logging in}
+    \subsection{Logging in}
 
 In the opposite case---either no session was found or it has already expired---the server responds with a 401 status code which forces the client to show the user to a login form. After filling in the form, the client makes a new request to the \code{api/user} resource, this time using the \code{POST} method, sending along user credentials. These credentials are then checked against a faculty LDAP server running at \code{ldap.fit.cvut.cz} using a secure connection. If user's identity is verified, the LDAP server responds with basic information about the user. Back at the application server, the database is queried for additional data using the user identifier. It either finds a relevant entry or not. In the former case, the entry is updated with a new timestamp, representing the last login time, and the server sends it to the client as a JSON object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
 
@@ -120,7 +174,7 @@ A new instance of \code{User} model is then created and filled with the availabl
 
 But since both the role and the subjects of a user can change, the server has to periodically request the current states of the aforementioned resources and make neccessary changes in the application database. This is one of the reasons the last login time is saved in the \code{User} model---using this information, the server makes sure not to ask for new data more than once a day. And since the majority of these changes occur at the start of a semester, long before any exam takes place, it should be frequent enough for most cases.
 
-\subsection{Client-side verification}
+    \subsection{Client-side verification}
 
 When the client receives the authentication data and stores it in the appropriate service, the user can start to use the application with the scope assigned to his role. If for some reason the \code{User} service gets unset again, the user is shown a login form and any navigation elsewhere is disabled until he successfully logs in. In this manner, the authentication is verified only via the client-side service which might not be up to date with the server. This is sufficient for some operations and serves to mitigate any latency that would arise from communication between the client and the server.
 
@@ -154,27 +208,39 @@ The HTTP interceptor can be seen in the figure \ref{fig:http_interceptor}. It re
 
 Something similar to the 401-filled responses also occurs when a user is not authorized to view a selected resource. This applies for example in the case when a user with the role of a student requests a different student's results. When such a thing happens, the server responds with a status code 403. Nevertheless, such request is never made on behalf of the client application and can only occur when the user tries to reach the server resource directly, via the provided API. That is why we do not have to handle this problem on the client side.
 
-\section{Blueprints}
+  \section{Blueprints}
 
 A blueprint represent what in real life would be the original copy of a written test. In the application, blueprints can be created, viewed and modified until the day of the exam. Quite obviously, all of these operations are allowed only for users that hold the role of a teacher. And even those can manage only the blueprints that belong to the courses they teach.
 
-\subsection{Resources}
+    \subsection{Resources}
 
 The blueprints are exposed as two resources, each of them designed for different use. The first one represents a collection of blueprints and is accessible via \code{/api/blueprints}. It supports optional query parameters for filtering by subject, date and language. When no subject is specified, the result is automatically filtered using the list of subjects contained in the \code{User} service. If, on the other hand, a subject is given, it is tested against the same list and if no match is found, the server responds with a 403 code. Otherwise, the query is passed along.
 
-In the end, the resource returns a collection of all the blueprints in the database that satisfy the inherent or supplied conditions. Anyhow, the view on the collection is shallow, meaning only identifiers of a blueprint are returned, not an actual content. Since on the client side the resource is used only for listings, anything more than that would be a waste of bandwidth. For these reasons, it responds only to request of the \code{GET} type.
+In the end, the resource returns a collection of all the blueprints in the database that satisfy the inherent or supplied conditions. Anyhow, since the resource is used only for listings on the client side, it is unreasonable to request the actual content of the blueprints. Sending just the basic information will suffice and anything more than that would be a waste of bandwidth. To trim the response, the client can use the optional parameter \code{fields}. It is available to all the resources the API provides and when given, it prompts the server to return only the specified fields.
 
 The other resource is used for operations dealing with a particular blueprint and can be found at URI \code{api/blueprint/\{subject\}/\{date\}/\{language\}}. Note that the variables are not optional and must be validated before any further processing, otherwise the server returns an error. The subject must be a valid subject code---starting with either \code{MI} or \code{BI} depending on the level of the subject, followed by a hyphen and ending with three word characters. The date must represent a string formatted as \code{YYYY-MM-DDThh:mm}, for example \code{2014-04-25T07:51}, and the language is validated against the standard \textit{ISO 639-1} which allows only codes like \code{en} or \code{cs}.
 
 The combination of these three variables is the only unique identifier of a blueprint in the application. There is a different type of key we might have used, which is the entry identifier assigned to every exam term in \textit{KOS}, but because of the fact that an exam can be taken in different languages at once, it would not suffice. Even though such case is not very probable, it could still happen, and there is no reason for the application not to be as flexible as possible. It also helps retain a certain human-friendliness, as opposed to having to query the server API using generated identifiers.
 
-\subsection{Viewing blueprints}
+    \subsection{Viewing blueprints}
 
 To view the blueprints, which only teachers are allowed to, the user must navigate to the state \code{Blueprints} which results in URL \code{/blueprints}. The items depicted are organized in stacks which reflect the logical distribution of blueprints among subjects. If only one subject is available, the user is presented directly with individual blueprints. Clear graphical distinction is made between what is considered stack and what is an individual ``sheet'' so that the user quickly recognizes which is which. Apart from using the browser history, the user can navigate the blueprints using a breadcrumbs navigation. This is possibly excessive in this case but makes more sense in different listings, for example when viewing exams where the structure depth can reach four levels. Also important is the fact that the current level is shared among all listings, which should help with the workflow. Anyhow, the listing is empty so far because we have yet to create our first blueprint.
 
-\subsection{New blueprint}
+    \subsection{New blueprint}
 
 To create a new blueprint, the user must enter the state \code{NewBlueprint} which is reflected in the URL as \code{/new}. She is then presented with a listing similar to the one before, only this time with exam terms instead of blueprints. Terms are the particular dates on which an exam takes place---we can get those by reaching the \textit{KOSapi} resource \code{/courses/\{subject\}/exams}, using each of the user's subjects as the variable. The client actually asks the application server resource \code{api/examterms/\{subject\}} whose only job is to delegate the request to the aforementioned endpoint and return the transformed result. But before sending the request
+
+  \section{Exams}
+
+    \subsection{Viewing exams}
+
+    \subsection{Ongoing exam}
+
+      \subsubsection{Overviewing an exam}
+
+      \subsubsection{Taking an exam}
+
+    \subsection{Exam evaluation}
 
 \setsecnumdepth{part}
 \chapter{Conclusion}
