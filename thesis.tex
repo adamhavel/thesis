@@ -14,7 +14,9 @@
 % \usepackage{setspace}
 % \onehalfspacing
 
-\OnehalfSpacing
+% \OnehalfSpacing
+
+\linespread{1.3}
 
 \setsecheadstyle{\bfseries\LARGE\sffamily}
 \setsubsecheadstyle{\bfseries\large\sffamily}
@@ -120,9 +122,9 @@
 
     \subsubsection{Services}
 
-The core of the application lies in the so called services which are objects that are used to organize code into logical units and wired together using dependency injections to create new functionality. They are built upon services already present in Angular like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
+The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in Angular like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
-Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, so that it can provide information about their state to users. That is the reason most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on a user's role. That is why we want to know the role before we start creating instances of services a user might not be able to use anyway. Since the majority of the services also create event listeners, they would only pose as a potential memory hog.
+Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, so that it can provide information about their state to users. That is the reason most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on a user's role. That is why we want to know the role before we start creating instances of services a user might not be able to use anyway. And because the majority of the services also create event listeners, which would only pose as potential memory hogs.
 
 This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. If a user successfully authenticates, it emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
@@ -166,19 +168,47 @@ This is what Dieter Rams meant when he said that good design makes a product und
 
 It is because of these and many other reasons that the approach taken in designing the application user interface, while based on the principles of flat design in its focus on typography and color, is not shying away from some of the more reasonable aspects of skeuomorphism. Even though the design does rely heavily upon simple shapes and deliberate use of color, the most ostentatious attempt at emulating reality is immediately apparent when one takes a look at the page layout, as seen in the figure \ref{fig:page_layout}. The main content is presented in a form reminiscent of a sheet of paper. This is heightened by the use of color, a subtle drop shadow and the fact that when there is not enough content to stretch it further, the ``sheet'' holds a ratio of 1:1.414, the same as a real piece of paper. The reasoning behind this idea is to provide the users---especially the students---with something familiar. Novelties and surprises have their place in design, but one must choose wisely how and when to introduce them---confounding a student who is probably already struggling with his exam is hardly a good idea.
 
-The side effect of this decision takes shape in the relatively small portion of the available viewport width being occupied by the main content, at least on displays designated for desktop use. This further strengthens the idea that the main content should always be in the spotlight. Any additional information that might not be essential but proves helpful is placed outside of this area---its opacity reduced unless in focus, in order not to distract the user. An example of such component is a table of contents which, apart from providing the document structure at a quick glance, allows an user to tell his current position and to swiftly jump to a different part by way of anchor links.
+The side effect of this decision takes shape in the relatively small portion of the available viewport width being occupied by the main content, at least on displays designated for desktop use. This further strengthens the idea that the main content should always be in the spotlight. Any additional information that might not be essential but proves helpful is placed outside of this area---its opacity reduced unless in focus, in order not to distract the user. An example of such a component is the table of contents which apart from providing the document structure allows an user to tell his current position and to swiftly jump to a different part by way of anchor links.
 
-Menu
+The main navigation menu behaves similarly---translucent until the moment it is actually used. Only the active items are highlighted continually by taking on a likeness of bookmarks. Not just an aesthetic choice, this application of skeuomorphism is also meant as way to get across the idea that just like with a real book, there can be more than one bookmark at a time, each representing a shortcut to some point of interest.
 
     \subsubsection{Typography}
+
+Notwithstanding the importance of aesthetic qualities, the actual content is what in the end matters the most. In this case, the content is mostly textual, it is therefore necessary to make educated choices about the way the text is presented and structured. Such is the focus of the art of typography---arranging type in order to make the language it forms most appealing to reading and recognition. This involves the selection of typefaces, choosing the right font sizes and weights for each situation, adjusting the length and spacing of line, and much more.
+
+The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, with the main focus being to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif. It also offers an enhanced legibility, which makes it a perfect match for our needs.
 
     \subsubsection{Colors}
 
 The backdrop color has been chosen deliberately for its properties and effects on human mind. A light that is composed predominantly of the color blue has a direct and powerful influence on the secretion of melatonin, a hormone that regulates sleep patterns in mammals. So while it is generally a good idea to avoid blue light at night in order not to disturb one's sleep, the very same quality can be used during the day to effectively raise a person's alertness.
 
-While other colors might not have the same powerful properties, each of them holds some kind of meaning, which is more often than not defined by culture. It would therefore be unwise not to follow these leads and use the colors haphazardly. One simply has to know its product's target market and adjust accordingly to local traditions. Little details such as the fact that in the Japanese culture, the color white represents death may seem peculiar for us Westerners, but in the end do matter.
+While other colors might not have the same powerful properties, each of them holds some kind of meaning, which is more often than not defined by a culture. It would therefore be unwise not to follow these leads and use the colors haphazardly. One simply has to know its product's target market and adjust accordingly to local traditions. Little details such as the fact that in the Japanese culture, the color white represents death may seem peculiar for us Westerners, but in the end do matter.
 
-As already mentioned, the main content is filled with an off-white color expressed as a RGB hex triplet with a value of \code{\#fbfaf5}. Apart from trying to mimick the properties of a real paper, such color tends to be easier on eyes than pure white. The other colors in use are employed mainly as a visual cue so that a user can quickly grasp the meaning behind a message or a prompt. This is especially true for the so called modal windows, which are leaned upon heavily in the application. A modal window is a kind of a child window that requires a user interaction in order to allow the user to return to the main window. They are used to draw attention to vital pieces of information or to display emergency states. And even though they are often criticized for breaking a user's workflow, more often than not, they
+As already mentioned, the main content is filled with an off-white color expressed as a RGB hex triplet with a value of \code{\#fbfaf5}. Apart from trying to mimick the properties of a real paper, such color tends to be easier on eyes than pure white. The rest of the colors represent what is often called the brand of a product. They should be distinct enough so as to be immediately recognizable. In many cases, they are also employed as a kind of a visual cue to convey different meanings. These should be easier to grasp than for example a written prompt by itself---at least for those users that do not suffer from colorblindness. This approach is used for example in the navigation menu, as seen in the figure \ref{fig:menu}: a differently colored bookmark represents a different state of a given item. The yellow bookmark (\code{\#fdc807}) stands for the currently active page. The green one (\code{\#78e5b1}) hints at a work in progress. And when a bookmark turns red (\code{\#d1192b}), it is to draw attention to an urgent matter, for example exams that have yet to be evaluated.
+
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{menu.png}}
+  \caption{Navigation menu}
+  \label{fig:menu}
+\end{figure}
+
+To maintain a coherent visual identity, only the colors stated above and their variations are used throughout the application. The variations are created by means of two internal Sass functions: \code{ligthen()} and \code{darken()}. These functions take an original color as the first argument and an amount of change expressed in percentage as the second. The result is a color that is not different in hue from the original one---only the amount of white is augmented or reduced.
+
+Anyhow, everything written about colors so far holds especially true for the so called modal windows. These are utilized heavily in the application and can be used as another example to further expand upon the argument for the importance of colors.
+
+    \subsubsection{Modals}
+
+A modal window is a kind of a child window that requires a user interaction in order to allow the user to return to the main window. They are used to draw attention to vital pieces of information or to display emergency states. And even though they are often criticized for breaking the user's workflow, they tend to be irreplaceable in many situations. Many of their shortcomings can be remedied by using simple techniques such as darkening the background behind the window in order to focus the user's attention.
+
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{modal.png}}
+  \caption{Modal window}
+  \label{fig:modal}
+\end{figure}
 
     \subsubsection{Icons}
 
