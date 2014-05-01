@@ -72,7 +72,7 @@
 % %\usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
 
 \department{Department of Software Engineering}
-\title{Application for Entering and Evaluation of Written Exams}
+\title{Application for Creating, Taking\\ and Evaluating Written Exams}
 \authorGN{Adam}
 \authorFN{Havel}
 \author{Adam Havel}
@@ -184,9 +184,9 @@ Notwithstanding the importance of aesthetic qualities, in the end, what matters 
   \label{fig:pt_sans}
 \end{figure}
 
-The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif, and one that possesses an enhanced legibility. While choosing a serif font family would make more sense for longer passages of text, in this case the content is expected to consist of rather short snippets, sans-serif family therefore makes a better choice and matches nicely with the streamlined aesthetics of the application.
+The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, as a way to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif, and one that possesses an enhanced legibility. While choosing a serif font family would make more sense for longer passages of text, in this case the content is expected to consist of rather short snippets, sans-serif family therefore makes a better choice and matches nicely with the streamlined aesthetics of the application.
 
-When combining different typefaces, it is necessary to pick font families that share similar x-height, which is---not very surprisingly---the height of the letter \textit{x} in a given font. If one does not feel adventurous, it is generally a good idea to choose typefaces from the same superfamily. The result is a set of fonts that, while belonging to different classes like sans and serif, have a similar appearance and properties, such as the aforementioned x-height. It is for these reasons that \textit{PT Sans Narrow} complements nicely the body text typeface while used in headings---the contrast such combination creates helps further define the document structure visually.
+When combining different typefaces, it is necessary to pick font families that share similar x-height, which is---not very surprisingly---the height of the letter \textit{x} in a given font. If one does not feel adventurous, it is generally a good idea to choose typefaces from the same superfamily. The result is a set of fonts that, while belonging to different classes like sans and serif, have a similar appearance and properties, such as the aforementioned x-height. It is for these reasons that \textit{PT Sans Narrow} nicely complements the body text typeface while used in headings---the contrast such combination creates helps further define the document structure visually.
 
 The same rationale has been used when selecting the \textit{PT Mono} typeface. It is a monospaced family which means the font's letters and characters each occupy the same amount of horizontal space. That makes it appropriate to use when displaying fragments of computer code or for numerical tabular data.
 
@@ -199,17 +199,39 @@ The same rationale has been used when selecting the \textit{PT Mono} typeface. I
   \label{fig:roboto}
 \end{figure}
 
-The last typeface used is \textit{Roboto}, which has been developed by Google as the default font family for the Android operating system. While often described as a ``Frankenstein'' among fonts, because of the way it mixes different typographic styles, is it actually a good match for interface elements. It is therefore used in the navigation menu, and all the buttons and prompts.
+Last on the list is \textit{Roboto}---a typeface developed by Google to serve as the default font family for the Android operating system. While often described as a ``Frankenstein among fonts'', because of the way it mixes different typographic styles, it is actually a good match for interface elements. It is therefore used in the navigation menu, and all the buttons and prompts.
 
-Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text contains around 60 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS unit \code{em}. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size, changing thus proportionally all the other dimensions.
+Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS unit \code{em}. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size, which forces the rest of the layout to change proportionally.
 
+The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
 
+The golden mean with its proportion of 1:1.618 is the obvious choice, but there are many others, equally useful. One of the simplest is the musical fifth with a ratio of 3:2. When put into our scale, the first value it generates is 1.5 \code{em}---a good starting point for a line height, which we are going to cover in a moment.
+
+\begin{figure}[h]
+  \begin{lstlisting}
+@mixin blank-lines($lines: 1, $direction: trailing, $type: margin) {
+  $space: $lines * $leading;
+  @if $direction == trailing {
+    #{$type}-bottom: $space;
+  } @else if $direction == leading {
+    #{$type}-top: $space;
+  } @else if $direction == both {
+    #{$type}-top: $space;
+    #{$type}-bottom: $space;
+  }
+}
+  \end{lstlisting}
+  \caption{Vertical rhythm in Sass mixin}
+  \label{fig:vertical_rhythm_mixin}
+\end{figure}
+
+As mentioned before, another essential property of a text is line spacing, also called leading. Using the modular scale, it is set here to be one and a half times of the font size. To further improve legibility, the leading of the body text is then chosen as the base for what is called the vertical rhythm---a principle concerned with unifying the line heights of different elements so that each line, blank or not, can be expressed only as a multiple of this base. It is important to note that the base is no longer relative, i.e. expressed in \code{em}, but absolute. In the case of our body text with a font size of 16 pixels and line height set to 1.5 \code{em}, the base holds a value of 24 pixels. Multiples of this number are then used to define any line height, spacing or dimensions in the vertical direction. This is reflected in the stylesheet, where except a few cases, every vertical \code{margin} or \code{padding} is expressed using the Sass mixin shown in the figure \ref{fig:vertical_rhythm_mixin}. The multipliers do not necessarily have to be integers but they should sum to a whole number. It is therefore allowed to have for example an element with margin of half the leading in both directions, since it adds up to one.
 
     \subsubsection{Colors}
 
 The backdrop color has been chosen deliberately for its properties and effects on human mind. A light that is composed predominantly of the color blue has a direct and powerful influence on the secretion of melatonin, a hormone that regulates sleep patterns in mammals. So while it is generally a good idea to avoid blue light at night in order not to disturb one's sleep, the very same quality can be used during the day to effectively raise a person's alertness.
 
-While other colors might not have the same powerful properties, each of them holds some kind of meaning, which is more often than not defined by a culture. It would therefore be unwise not to follow these leads and use the colors haphazardly. One simply has to know its product's target market and adjust accordingly to local traditions. Little details such as the fact that in the Japanese culture, the color white represents death may seem peculiar for us Westerners, but in the end do matter.
+While other colors might not have the same powerful properties, each of them holds some kind of meaning, which is more often than not defined a culture. It would be therefore unwise not to follow these leads and use the colors haphazardly. One simply has to know the product's target market and adjust accordingly to local traditions. Little details such as the fact that in the Japanese culture, the color white represents death may seem peculiar for us Westerners, but in the end do matter.
 
 As already mentioned, the main content is filled with an off-white color expressed as a RGB hex triplet with a value of \code{\#fbfaf5}. Apart from trying to mimick the properties of a real paper, such color tends to be easier on eyes than pure white. The rest of the colors represent what is often called the brand of a product. They should be distinct enough so as to be immediately recognizable. In many cases, they are also employed as a kind of a visual cue to convey different meanings. These should be easier to grasp than for example a written prompt by itself---at least for those users that do not suffer from colorblindness. This approach is used for example in the navigation menu, as seen in the figure \ref{fig:menu}: a differently colored bookmark represents a different state of a given item. The yellow bookmark (\code{\#fdc807}) stands for the currently active page. The green one (\code{\#78e5b1}) hints at a work in progress. And when a bookmark turns red (\code{\#d1192b}), it is to draw attention to an urgent matter, for example exams that have yet to be evaluated.
 
