@@ -174,9 +174,36 @@ The main navigation menu behaves similarly---translucent until the moment it is 
 
     \subsubsection{Typography}
 
-Notwithstanding the importance of aesthetic qualities, the actual content is what in the end matters the most. In this case, the content is mostly textual, it is therefore necessary to make educated choices about the way the text is presented and structured. Such is the focus of the art of typography---arranging type in order to make the language it forms most appealing to reading and recognition. This involves the selection of typefaces, choosing the right font sizes and weights for each situation, adjusting the length and spacing of line, and much more.
+Notwithstanding the importance of aesthetic qualities, in the end, what matters the most is the actual content. In this case, the content is mostly textual, it is therefore necessary to make educated choices about the way the text is presented and structured. Such is the focus of the art of typography---arranging type in order to make the language it forms most appealing to reading and recognition. This involves the selection of typefaces, choosing the right font sizes and weights for each situation, adjusting the length and spacing of line, and much more.
 
-The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, with the main focus being to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif. It also offers an enhanced legibility, which makes it a perfect match for our needs.
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{pt-sans.png}}
+  \caption{Example of \textit{PT Sans} typeface}
+  \label{fig:pt_sans}
+\end{figure}
+
+The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif, and one that possesses an enhanced legibility. While choosing a serif font family would make more sense for longer passages of text, in this case the content is expected to consist of rather short snippets, sans-serif family therefore makes a better choice and matches nicely with the streamlined aesthetics of the application.
+
+When combining different typefaces, it is necessary to pick font families that share similar x-height, which is---not very surprisingly---the height of the letter \textit{x} in a given font. If one does not feel adventurous, it is generally a good idea to choose typefaces from the same superfamily. The result is a set of fonts that, while belonging to different classes like sans and serif, have a similar appearance and properties, such as the aforementioned x-height. It is for these reasons that \textit{PT Sans Narrow} complements nicely the body text typeface while used in headings---the contrast such combination creates helps further define the document structure visually.
+
+The same rationale has been used when selecting the \textit{PT Mono} typeface. It is a monospaced family which means the font's letters and characters each occupy the same amount of horizontal space. That makes it appropriate to use when displaying fragments of computer code or for numerical tabular data.
+
+\begin{figure}
+  \centering
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=0.66\textwidth]{roboto.png}}
+  \caption{\textit{Roboto} typeface as used in the interface}
+  \label{fig:roboto}
+\end{figure}
+
+The last typeface used is \textit{Roboto}, which has been developed by Google as the default font family for the Android operating system. While often described as a ``Frankenstein'' among fonts, because of the way it mixes different typographic styles, is it actually a good match for interface elements. It is therefore used in the navigation menu, and all the buttons and prompts.
+
+Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text contains around 60 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS unit \code{em}. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size, changing thus proportionally all the other dimensions.
+
+
 
     \subsubsection{Colors}
 
