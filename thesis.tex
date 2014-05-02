@@ -114,13 +114,7 @@
 
 \section{Client}
 
-  \subsection{Architecture}
-
-    \subsubsection{Structure}
-
-    \subsubsection{Routing}
-
-    \subsubsection{Services}
+  \subsection{Services}
 
 The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in AngularJS like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
@@ -128,13 +122,13 @@ Much of the core functionality is handled by aptly named services such as \code{
 
 This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. If a user successfully authenticates, it emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
-    \subsubsection{Directives}
+  \subsection{Directives}
 
 Directives are what could be considered AngularJS's answer to Web components. They are composed of HTML templates and logic, encapsulated together to form small and reusable units, camouflaged to the DOM either as custom elements or attributes. They can be set up in a way that makes their innards visible to the outside world. Most of the time, though, they create what is called the Shadow DOM, having their own isolate scope (and \code{\$scope}). Directives also provide a rare occasion for a direct interaction with the DOM---otherwise a forbidden fruit in AngularJS.
 
-In the application, directives are used mostly in the form of custom elements that uses native HTML elements for their structure and add logic to support manipulation with their contents. In most cases the interactivity is easily achieved by adding the attribute \code{contenteditable}. A problem lies in the fact, that unlike \code{input} elements which natively support AngularJS two-way binding through the \code{ng-bind} directive, other elements do not bind to a model, even if made editable in this way. Fortunately, this can be solved by using another custom directive that is applied everywhere a \code{contenteditable} attribute is found.
+In the application, directives are used mostly in the form of custom elements that uses native HTML elements for their structure and add logic to support manipulation with their contents. In most cases the interactivity is easily achieved by adding the attribute \code{contenteditable}. A problem lies in the fact, that unlike \code{input} elements which natively support AngularJS two-way binding through the \code{ng-bind} directive, other elements do not bind to a model, even if made editable in this way. Fortunately, this can be solved by using another custom directive that is applied alongside the \code{contenteditable} attribute.
 
-The directive can be seen in the figure \ref{fig:contenteditable_directive}. It uses the internal \code{ngModel} service to replicate the native binding mechanism. It also attaches an event listener that is triggered the moment a user tries to paste data into the element. Normally, any style associated with that data would be passed along as well---a highly undesirable behavior. The event is therefore hijacked and implemented in such a way that the data is taken directly from the clipboard as a plain text and inserted manually.
+The directive can be seen in the figure \ref{fig:contenteditable_directive}. It uses the internal \code{ngModel} service to replicate the native binding mechanism. It also attaches an event listener that is triggered the moment a user tries to paste data into the element. Normally, any style associated with that data would be passed along as well---a highly undesirable behavior at best. The event is therefore hijacked and implemented in such a way that the data is taken directly from the clipboard as a plain text and inserted manually.
 
 \begin{figure}[h]
   \begin{lstlisting}[language=JavaScript]
@@ -150,12 +144,10 @@ app.directive('contenteditable', function() {
         });
       });
 
-      if ($element[0].tagName.toLowerCase() !== 'code') {
-        $element.on('paste', function(e) {
-          e.preventDefault();
-          document.execCommand('InsertHTML', false, e.clipboardData.getData('text/plain'));
-        });
-      }
+      $element.on('paste', function(e) {
+        e.preventDefault();
+        document.execCommand('InsertHTML', false, e.clipboardData.getData('text/plain'));
+      });
 
       ngModel.$render = function() {
         $element.html(ngModel.$viewValue || '');
@@ -169,7 +161,15 @@ app.directive('contenteditable', function() {
   \label{fig:contenteditable_directive}
 \end{figure}
 
+Such solution allows us to bind any content to one of the custom elements through a public interface and watch it update automatically whenever a change occurs. Nonetheless, given the distinct nature of the elements, each requires a different type of content. The most simple of these are the two directives \code{paragraph} and \code{snippet}---the first one being self-explanatory and the second serving as a container for fragments of code. They are similar in that they both expect a string for the content. Apart from that, the \code{paragraph} does little more than the native \code{p} element. Its purpose is mainly to unify the non-uniform behavior of the \code{enter} key among browsers---some create a newline by means of the tag \code{br}, others by adding \code{div}.
 
+      \subsubsection{Snippet}
+
+The \code{snippet} directive, on the other hand, does much more. Besides content, it is given a variable containing a name of a programming language, such as JavaScript or C++. Using an external library called \textit{Prism}, the content is then parsed according to rules specific to the language and any relevant keyword is wrapped with a \code{span} tag and a class that further specifies the node. Highlighting the content is therefore only a matter of applying the right styles. Every time the content changes, this procedure is repeated. Furthermore, the element is given an event listener that watches for a \code{tab} key being pressed. When that happens, the default behavior---changing the focus to the next element---is prevented and the content is instead indented. As expected when working with a code, the depth of the indentation is maintained even if the user enters a newline.
+
+      \subsubsection{List and options}
+
+The directives \code{list} and \code{options} both require the content to be an array of objects. In the case of \code{list}, an array of strings would normally suffice, at least if one only needed to show the contents. But we must be able to modify it too, and the directive \code{ng-repeat}---used to traverse and display the items---requires objects to be able to tell which item is which whenever a change occurs. If no content is given, the directives construct the necessary, albeit empty, structure themselves. This structure---albeit empty---is necessary.
 
 % \begin{figure}[h]
 %   \begin{lstlisting}[language=JavaScript]
@@ -211,6 +211,10 @@ app.directive('contenteditable', function() {
 %   \caption{Logic of the List directive}
 %   \label{fig:list_directive}
 % \end{figure}
+
+  \subsection{Routing}
+
+  \subsection{Stylesheets}
 
   \subsection{Optimization}
 
@@ -283,7 +287,7 @@ The same rationale has been used when selecting the \textit{PT Mono} typeface. I
 
 Last on the list is \textit{Roboto}---a typeface developed by Google to serve as the default font family for the Android operating system. While often described as a ``Frankenstein among fonts'', because of the way it mixes different typographic styles, it is actually a good match for interface elements. It is therefore used in the navigation menu, and all the buttons and prompts.
 
-Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size, which would force the rest of the layout to change proportionally.
+Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size and changing thus proportionally the rest of the layout.
 
 The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
 
