@@ -171,46 +171,46 @@ The \code{snippet} directive, on the other hand, does much more. Besides content
 
 The directives \code{list} and \code{options} both require the content to be an array of objects. In the case of \code{list}, an array of strings would normally suffice, at least if one only needed to show the contents. But we must be able to modify it too, and the directive \code{ng-repeat}---used to traverse and display the items---requires objects to be able to tell which item is which whenever a change occurs.
 
-% \begin{figure}[h]
-%   \begin{lstlisting}[language=JavaScript]
-% $element.on('keydown', function(e) {
-%   var k = e.keyCode;
-%   if (k === 13 || k === 8 || k === 46 || k === 38 || k === 40) {
-%     var item = e.target;
-%     var items = getElements('li', $element[0]);
-%     var index = items.indexOf(item);
-%     if (k === 13) {
-%       e.preventDefault();
-%       $scope.items.splice(index + 1, 0, { content: ''});
-%       $scope.$apply();
-%       getElements('li', $element[0])[index + 1].focus();
-%     } else {
-%       var focusOn = null;
-%       if ((k === 8 || k === 46) && $scope.items.length > 1 && !$scope.items[index].content) {
-%         $scope.items.splice(index, 1);
-%         $scope.$apply();
-%         focusOn = items[index - 1];
-%       } else if (k === 38) {
-%         focusOn = index > 0 ? items[index - 1] : null;
-%       } else if (k === 40) {
-%         focusOn = index < items.length - 1 ? items[index + 1] : null;
-%       }
-%       if (focusOn) {
-%         e.preventDefault();
-%         var range = document.createRange();
-%         range.selectNodeContents(focusOn);
-%         range.collapse(false);
-%         var selection = window.getSelection();
-%         selection.removeAllRanges();
-%         selection.addRange(range);
-%       }
-%     }
-%   }
-% });
-%   \end{lstlisting}
-%   \caption{Logic of the List directive}
-%   \label{fig:list_directive}
-% \end{figure}
+\begin{figure}[h]
+  \begin{lstlisting}[language=JavaScript]
+$element.on('keydown', function(e) {
+  var k = e.keyCode;
+  if (k === 13 || k === 8 || k === 46 || k === 38 || k === 40) {
+    var item = e.target;
+    var items = getElements('li', $element[0]);
+    var index = items.indexOf(item);
+    if (k === 13) {
+      e.preventDefault();
+      $scope.items.splice(index + 1, 0, { content: ''});
+      $scope.$apply();
+      getElements('li', $element[0])[index + 1].focus();
+    } else {
+      var focusOn = null;
+      if ((k === 8 || k === 46) && $scope.items.length > 1 && !$scope.items[index].content) {
+        $scope.items.splice(index, 1);
+        $scope.$apply();
+        focusOn = items[index - 1];
+      } else if (k === 38) {
+        focusOn = index > 0 ? items[index - 1] : null;
+      } else if (k === 40) {
+        focusOn = index < items.length - 1 ? items[index + 1] : null;
+      }
+      if (focusOn) {
+        e.preventDefault();
+        var range = document.createRange();
+        range.selectNodeContents(focusOn);
+        range.collapse(false);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  }
+});
+  \end{lstlisting}
+  \caption{Logic of the List directive}
+  \label{fig:list_directive}
+\end{figure}
 
   \subsection{Routing}
 
@@ -335,11 +335,9 @@ Anyhow, everything written about colors so far holds especially true for the so 
 
     \subsubsection{Modals}
 
-A modal window is a kind of a child window that requires a user interaction in order to allow the user to return to the main window. They are used to draw attention to vital pieces of information or to display emergency states. And even though they are often criticized for breaking the user's workflow, they are usually irreplaceable in many situations. Most of their shortcomings can be remedied by using simple techniques such as darkening the background behind the window in order to focus the user's attention.
+A modal is a type of a child window that requires a user interaction in order to allow the user to return to the main window. They are used to draw attention to vital pieces of information or to display emergency states. And even though they are often criticized for breaking the user's workflow, they are irreplaceable in many situations. Most of their shortcomings can be remedied by using simple techniques such as darkening the background behind the window in order to focus the user's attention.
 
-Another important aspect of modal windows is the fact that prompts tend to be either read wrong or not at all. It is therefore necessary to provide some countermeasures, in order to minimize the chance a user will do something he might regret later. There are several thing that can be done: first, as already stated before, it is important to create a consistent visual identity and adhere to it strictly. By using the color cues, a user is able to tell the general meaning behind a prompt, even before reading the message. And there is no need to go against the grain and try to fight preconceptions---an error message should be red and confirmation of success green. Yellow is meant to alert the user about a non-recoverable action he is about to make or in general any event that requires an immediate attention. Last but not least, purple holds the message that some kind of input---like submitting an image---is required in order to continue.
-
-
+Another important aspect of modal windows is the fact that prompts tend to be either read wrong or not at all. It is therefore necessary to provide some countermeasures, in order to minimize the chance a user will do something he might regret later. There are several thing that can be done: first, as already stated before, it is important to create a consistent visual identity and adhere to it strictly. By using the color cues, a user is able to tell the general meaning behind a prompt, even before reading the message. And there is no need to go against the grain---an error message should be red and confirmation of success green. Yellow is meant to alert the user about a non-recoverable action he is about to make or in general any event that requires an immediate attention. Last but not least, purple holds the message that some kind of input---like submitting an image---is required in order to continue.
 
 \begin{figure}
   \setlength\fboxsep{0pt}
@@ -349,7 +347,19 @@ Another important aspect of modal windows is the fact that prompts tend to be ei
   \label{fig:modal}
 \end{figure}
 
+Furthermore, if possible, the user must be given a way to abort the action in question. This is usually accomplished by means of a cancel button. If present, it is also necessary to tell what is the primary action for given prompt. For example, when a modal warns the user he is about to delete something, the primary action is to cancel the removal. This is expressed in several ways. Visually, by emphasizing the cancel button and making the other, so called secondary action button less pronounced. Positionally, by placing the primary action button as the rightmost, which is the place the user is most likely going to click. And last, functionally, by binding it to the \code{enter} key.
+
+
+
     \subsubsection{Icons}
+
+\begin{figure}[H]
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{icons.png}}
+  \caption{Example of icons}
+  \label{fig:icons}
+\end{figure}
 
     \subsubsection{Performance}
 
@@ -427,6 +437,14 @@ The combination of these three variables is the only unique identifier of a blue
 
 To view the blueprints, which only teachers are allowed to, the user must navigate to the state \code{Blueprints} which results in URL \code{/blueprints}. The items depicted are organized in stacks which reflect the logical distribution of blueprints among subjects. If only one subject is available, the user is presented directly with individual blueprints. Clear graphical distinction is made between what is considered stack and what is an individual ``sheet'' so that the user quickly recognizes which is which. Apart from using the browser history, the user can navigate the blueprints using a breadcrumbs navigation. This is possibly excessive in this case but makes more sense in different listings, for example when viewing exams where the structure depth can reach four levels. Also important is the fact that the current level is shared among all listings, which should help with the workflow. Anyhow, the listing is empty so far because we have yet to create our first blueprint.
 
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{listing.png}}
+  \caption{Example of listing}
+  \label{fig:listing}
+\end{figure}
+
     \subsection{New blueprint}
 
 To create a new blueprint, the user must enter the state \code{NewBlueprint} which is reflected in the URL as \code{/new}. She is then shown a listing similar to the one before, only this time with exam terms instead of blueprints. Terms are the particular dates on which an exam takes place---we can get those by reaching the \textit{KOSapi} resource \code{/courses/\{subject\}/exams}, using each of the user's subjects for the variable, one after another. The client actually asks the application server resource \code{api/examterms/\{subject\}} which delegates the request to the aforementioned endpoint. The result is then stripped of any term that is already fully occupied with blueprints in the database.
@@ -446,6 +464,14 @@ The blueprint is initialized with an empty section
       \subsubsection{Watching over exams}
 
       \subsubsection{Taking exams}
+
+\begin{figure}[H]
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{ethical-codex.png}}
+  \caption{Modal window}
+  \label{fig:ethical-codex}
+\end{figure}
 
     \subsection{Exam evaluation}
 
