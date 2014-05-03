@@ -218,7 +218,51 @@ $element.on('keydown', function(e) {
 
   \subsection{Routing}
 
-  \subsection{Stylesheets}
+  \subsection{Style sheets}
+
+The look and feel of the application is described using CSS style sheets. While fine by itself for small applications, CSS is highly unsuitable for more complex projects, due to its inherent inability to create reusable modules. Even though such thing actually is possible through the CSS function \code{@import}, the performance drawbacks are so severe that it stops being a viable option. To supply this need, some kind of CSS preprocessor therefore must be used.
+
+    \subsubsection{Preprocessor}
+
+\textit{Sass} is the most natural choice, being the de facto solution for construction of complex style sheets. In opposition to vanilla CSS, the Sass \code{@import} function is not called on runtime but during the compilation process. This allows us to create highly manageable structure of self-contained modules, using the principle of separation of concerns. Each of these modules can then deal with different aspect of the presentation---one may be used to normalize various peculiarities among browsers, another can focus solely on typography or forms, and so on. Using \textit{Sass} also gives us the opportunity to employ variables, rule nesting, mixins, or selector inheritance---none of those available in vanilla CSS.
+
+    \subsubsection{Methodology}
+
+
+
+The overhead is almost nonexistent when serving the pages using a GZip compression---this is because the often repeated class names tend to compress well.
+
+    \subsubsection{Breakpoints}
+
+A grid system is a necessity when a construction of web layouts.
+
+These breakpoints are device-agnostic, which means they are not constructed around specific devices and their resolutions, but instead, around the natural breakpoints of the layout itself.
+
+\begin{figure}[h]
+  \begin{lstlisting}
+$breakpoints: (
+  'portable' '(max-width: #{($layout-width - .001)})',
+  'considerable' '(min-width: #{$line-length})',
+  'palm' '(max-width: #{($line-length - .001)})',
+  'lap' '(min-width: #{$line-length}) and (max-width: #{($layout-width - .001)})',
+  'desk' '(min-width: #{$layout-width})'
+);
+
+body {
+   animation-name: none;
+   @each $breakpoint in $breakpoints {
+      $type: nth($breakpoint, 1);
+      @include media-query($type) {
+         animation-name: #{$type};
+      }
+   }
+}
+  \end{lstlisting}
+  \caption{Breakpoints definition in \textit{Sass}}
+  \label{fig:sass_breakpoints}
+\end{figure}
+
+Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakpoints}, work well while used in the style sheets, sometimes we need to employ media queries in JavaScript, too. For example, the client might decide to load certain piece of code only if the screen is large enough, in order not to waste a user's bandwidth. While JavaScript supports media queries on its own, to use it means facing a different kind of problem: we would have to define the breakpoints on two places and therefore repeat ourselves. To solve this conundrum, a trick is used. The \code{body} element is given an \code{animation-name}---harmless on its own, unless an animation with the same name is found. The property is then filled with the different breakpoint string identifiers, depending on the currently active media query. All that is left to do is to define a function in JavaScript that returns the current value of the \code{animation-name} property---this is achieved by calling \code{getPropertyValue('animation-name')} on the computed-style object of the \code{body} element. Using this technique, the code remains DRY and the active media query is always within reach. An even better solution would be to use the \code{content} property of a pseudo-element attached to the \code{body}---unfortunately, \textit{Google Chrome} currently cannot retrieve this value by means of JavaScript.
 
   \subsection{Optimization}
 
@@ -291,7 +335,7 @@ The same rationale has been used when selecting the \textit{PT Mono} typeface. I
 
 Last on the list is \textit{Roboto}---a typeface developed by Google to serve as the default font family for the Android operating system. While often described as a ``Frankenstein among fonts'', because of the way it mixes different typographic styles, it is actually a good match for interface elements. It is therefore used in the navigation menu, and all the buttons and prompts.
 
-Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the CSS \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size and changing thus proportionally the rest of the layout.
+Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size and changing thus proportionally the rest of the layout.
 
 The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
 
@@ -315,11 +359,26 @@ The golden mean with its proportion of 1:1.618 is an obvious choice, but there a
   \label{fig:vertical_rhythm_mixin}
 \end{figure}
 
-Another essential property is the already mentioned line spacing, also called leading. Using a value from the modular scale, it is set to be one and a half times of the font size. To further improve legibility, the leading of the body text is then chosen as the base for what is called the vertical rhythm---a principle of unifying the line heights of different elements so that each line, blank or not, can be expressed only as a multiple of this base. It is important to note that the base is no longer relative, i.e. expressed in \code{em}, but absolute. In the case of our body text with a font size of 16 pixels and line height set to 1.5 \code{em}, the base holds a value of 24 pixels. Multiples of this number are then used to define any line height, spacing or dimensions in the vertical direction. This is reflected in the stylesheet, where except a few cases, every vertical \code{margin} or \code{padding} is expressed using the Sass mixin shown in the figure \ref{fig:vertical_rhythm_mixin}. The multipliers do not necessarily have to be integers but they should sum to a whole number. It is therefore allowed to have for example an element with margin of half the leading in both directions, since it adds up to one.
+Another essential property is the already mentioned line spacing, also called leading. Using a value from the modular scale, it is set to be one and a half times of the font size. To further improve legibility, the leading of the body text is then chosen as the base for what is called the vertical rhythm---a principle of unifying the line heights of different elements so that each line, blank or not, can be expressed only as a multiple of this base. It is important to note that the base is no longer relative, i.e. expressed in \code{em}, but absolute. In the case of our body text with a font size of 16 pixels and line height set to 1.5 \code{em}, the base holds a value of 24 pixels. Multiples of this number are then used to define any line height, spacing or dimensions in the vertical direction. This is reflected in the style sheets, where except a few cases, every vertical \code{margin} or \code{padding} is expressed using the Sass mixin shown in the figure \ref{fig:vertical_rhythm_mixin}. The multipliers do not necessarily have to be integers but they should sum to a whole number. It is therefore allowed to have for example an element with margin of half the leading in both directions, since it adds up to one.
 
     \subsubsection{Colors}
 
 The backdrop color has been chosen deliberately for its properties and effects on human mind. A light that is composed predominantly of the color blue has a direct and powerful influence on the secretion of melatonin, a hormone that regulates sleep patterns in mammals. So while it is generally a good idea to avoid blue light at night in order not to disturb one's sleep, the very same quality can be used during the day to effectively raise a person's alertness.
+
+\begin{figure}[h]
+  \begin{lstlisting}
+$colors: (
+  blue: #d7eeff,
+  paper: #fbfaf5,
+  yellow: #fdc807,
+  red: #d1192b,
+  green: #78e5b1,
+  purple: #957bf8
+);
+  \end{lstlisting}
+  \caption{Definition of colors in \textit{Sass}}
+  \label{fig:sass_colors}
+\end{figure}
 
 While other colors might not have the same powerful properties, each of them holds some kind of meaning, which is more often than not defined a culture. It would be therefore unwise not to follow these leads and use the colors haphazardly. One simply has to know the product's target market and adjust accordingly to local traditions. Little details such as the fact that in the Japanese culture, the color white represents death may seem peculiar for us Westerners, but in the end do matter.
 
@@ -506,12 +565,16 @@ Ariely then conducted another experiment, only this time the students had to sig
 \chapter{Acronyms}
 
 \begin{description}
-   \item[API] Application Programming Interface
-   \item[HTTP] Hypertext Transfer Protocol
-   \item[JSON] JavaScript Object notation
-   \item[LDAP] Lightweight Directory Access Protocol
-   \item[REST] Representational State Transfer
-   \item[XML] Extensible Markup Language
+  \item[API] Application Programming Interface
+  \item[CSS] Cascading Style Sheets
+  \item[DOM] Document Object Model
+  \item[DRY] Don't Repeat Yourself
+  \item[HTML] Hypertext Markup Language
+  \item[HTTP] Hypertext Transfer Protocol
+  \item[JSON] JavaScript Object notation
+  \item[LDAP] Lightweight Directory Access Protocol
+  \item[REST] Representational State Transfer
+  \item[XML] Extensible Markup Language
 \end{description}
 
 
