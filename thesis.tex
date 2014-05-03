@@ -85,7 +85,7 @@
 \keywordsCS{Replace with comma-separated list of keywords in Czech.}
 \keywordsEN{Replace with comma-separated list of keywords in English.}
 \declarationOfAuthenticityOption{1} %select as appropriate, according to the desired license (integer 1-6)
-
+\settocdepth{subsection}
 
 \begin{document}
 
@@ -169,13 +169,13 @@ Such solution allows us to bind any content to one of the custom elements throug
 
       \subsubsection{Snippet}
 
-The \code{snippet} directive, on the other hand, does much more. Besides content, it is given a variable containing a name of a programming language, such as JavaScript or C++. Using an external library called \textit{Prism}, the content is then parsed according to rules specific to the language and any relevant keyword is wrapped with a \code{span} tag and a class that further specifies the node. Highlighting the content is therefore only a matter of applying the right styles. Every time the content changes, this procedure is repeated. Furthermore, the element is given an event listener that watches for a \code{tab} key being pressed. When that happens, the default behavior---changing the focus to the next element---is prevented and the content is instead indented. As expected when working with a code, the depth of the indentation is maintained even if the user enters a newline.
+The \code{snippet} directive, on the other hand, does much more. Besides content, it is given a variable containing a name of a programming language, such as JavaScript or C++. Using an external library called \textit{Prism}, the content is then parsed according to rules specific to the language and any relevant keyword is wrapped with a \code{span} tag and a class that further specifies the node. Highlighting the content is therefore only a matter of applying the right styles. Every time the content changes, this procedure is repeated. Furthermore, the element is given an event listener that watches for a \code{tab} key being pressed. When that happens, the default behavior---changing the focus to the next element---is prevented and the content is instead indented. As expected when working with code, the depth of the indentation is maintained even if the user enters a newline.
 
       \subsubsection{List and options}
 
-The directives \code{list} and \code{options} both require the content to be an array of objects. In the case of \code{list}, an array of strings would normally suffice, at least if one only needed to show the contents. But we must be able to modify it too, and the directive \code{ng-repeat}---used to traverse and display the items---requires objects to be able to tell which item is which whenever a change occurs.
+The directives \code{list} and \code{options} both require the content to be an array of objects. In the case of \code{list}, an array of strings would normally suffice, at least if one only needed to show the contents. But we must be able to modify it too, and the directive \code{ng-repeat}---used to traverse and display the items---requires a list of objects to be able to tell which item is which whenever a change occurs.
 
-\begin{figure}[h]
+\begin{figure}
   \begin{lstlisting}[language=JavaScript]
 $element.on('keydown', function(e) {
   var k = e.keyCode;
@@ -216,27 +216,80 @@ $element.on('keydown', function(e) {
   \label{fig:list_directive}
 \end{figure}
 
+It is also necessary to provide a way to create and delete items from the list. This is achieved by binding a key press event listener to the element. The listener makes the key \code{enter} and \code{backspace} create or delete an item, respectively. In the first case, the new item is created after the current one and the focus is changed accordingly. In the second case, the item is removed only if the cursor is at the beginning of its content or if empty. The listener in question can be seen in the figure \ref{fig:list_directive}. While the \code{options} directive is a little different because it also holds a boolean value besides the content, it essentially behaves the same way.
+
+      \subsubsection{Canvas}
+
+The most complex among the directives is the \code{icanvas}---a container around a \code{canvas} element that provides tools for editing the content. The directive is in fact not interacting with the canvas itself, but instead with a high-level abstraction that encapsulates the native low-level API the canvas provides. This is made possible by an external library \textit{Fabric.js}. Apart from giving us a more efficient way to manipulate the canvas' contents, the library also allows us to serialize the canvas either into a JSON object or a SVG image---and deserialize it back into a canvas if needed. This is essential if we want to store the resulting image into the database.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+var circleHandler = {
+  mouseDown: function(o) {
+    canvas.calcOffset();
+    isMouseDown = true;
+    pointer = canvas.getPointer(o.e);
+    obj = new fabric.Ellipse({
+      strokeWidth: 1,
+      fill: 'rgba(255, 255, 255, .25)',
+      stroke: 'rgba(0, 0, 0, .75)',
+      top: pointer.y, left: pointer.x,
+      originY: 'top', originX: 'left',
+      selectable: false,
+      rx: 1, ry: 1,
+      perPixelTargetFind: true
+    });
+    canvas.add(obj);
+  },
+  mouseMove: function(o) {
+    if (!isMouseDown) {
+      return;
+    }
+    var currentPointer = canvas.getPointer(o.e);
+    obj.set({
+      rx: Math.abs(currentPointer.x - pointer.x),
+      ry: Math.abs(currentPointer.y - pointer.y)
+    });
+    canvas.renderAll();
+  },
+  mouseUp: function() {
+    isMouseDown = false;
+    obj.set({
+      width: obj.rx * 2, height: obj.ry * 2,
+      top: obj.top - obj.ry + 1, left: obj.left - obj.rx + 1
+    });
+    canvas.renderAll();
+    canvas.fire('object:modified', { target: obj });
+  }
+};
+  \end{lstlisting}
+  \caption{Example of \code{icanvas} tool handler}
+  \label{fig:tool_handler}
+\end{figure}
+
+The tools provide means to quickly draw basic shapes on the canvas and manipulate them as needed. This is achieved by registering a set of listeners that operate on mouse events. Whenever a tool is activated, all event listeners previously applied to the canvas are removed and a new set, distinct for each of the tools, is added instead. An example of a tool handler can be seen in the figure \ref{fig:tool_handler}.
+
   \subsection{Routing}
 
   \subsection{Style sheets}
 
-The look and feel of the application is described using CSS style sheets. While fine by itself for small applications, CSS is highly unsuitable for more complex projects, due to its inherent inability to create reusable modules. Even though such thing actually is possible through the CSS function \code{@import}, the performance drawbacks are so severe that it stops being a viable option. To supply this need, some kind of CSS preprocessor therefore must be used.
+The look and feel of the application is described using CSS style sheets. While fine by itself for small applications, CSS is highly unsuitable for more complex projects, due to its inherent inability to create modules. Even though such thing is actually possible through the CSS function \code{@import}, the performance drawbacks are so severe that it stops being a viable option. To supply this need, some kind of CSS preprocessor therefore must be used.
 
     \subsubsection{Preprocessor}
 
-\textit{Sass} is the most natural choice, being the de facto solution for construction of complex style sheets. In opposition to vanilla CSS, the Sass \code{@import} function is not called on runtime but during the compilation process. This allows us to create highly manageable structure of self-contained modules, using the principle of separation of concerns. Each of these modules can then deal with different aspect of the presentation---one may be used to normalize various peculiarities among browsers, another can focus solely on typography or forms, and so on. Using \textit{Sass} also gives us the opportunity to employ variables, rule nesting, mixins, or selector inheritance---none of those available in vanilla CSS.
+\textit{Sass} is the most natural choice, being the de facto solution for construction of complex style sheets. In contrast to vanilla CSS, the \textit{Sass} \code{@import} function is not called on runtime but during the compilation process. This allows us to create highly manageable structure of self-contained modules, using the principle of separation of concerns. Each of these modules can deal with different aspect of the presentation---one may be used to normalize various peculiarities among browsers, another can focus solely on typography or forms, and so on. Using \textit{Sass} also gives us the opportunity to employ variables, rule nesting, mixins, or selector inheritance---none of which are available in vanilla CSS.
 
     \subsubsection{Methodology}
 
+Before ...
 
+Another reason is performance. The selector engine parses a query from right to left. This means that if given the selector \code{.site-nav a}, it first matches all the \code{a} elements on a page. For each of those, the engine then has to traverse up the node tree to find out whether a parent with the class \code{site-nav} exists. This part can be greatly reduced by using \code{.site-nav > a}, but such selector is not always possible. If, on the other hand, the \code{a} elements are given a class \code{site-nav\_\_item}, the selection process is reduced to a simple lookup for all the elements with the class.
 
-The overhead is almost nonexistent when serving the pages using a GZip compression---this is because the often repeated class names tend to compress well.
+The drawback of this methodology is the considerable increase of class declarations in the document structure, which in turn leads to larger files. However, the overhead is greatly reduced when serving files using a GZip compression---the often repeated class names tend to compress well.
 
     \subsubsection{Breakpoints}
 
-A grid system is a necessity when a construction of web layouts.
-
-These breakpoints are device-agnostic, which means they are not constructed around specific devices and their resolutions, but instead, around the natural breakpoints of the layout itself.
+A grid system is almost always a necessity when constructing a web layout. While CSS offers its own grid layout module, the support among browsers is unfortunately almost nonexistent. It is therefore necessary to build one's own solution. Notwithstanding the final approach, any grid system should be responsive to changes in viewport width. This can be done by creating classes that set a grid's item to different widths depending on the currently active media query---a conditional block that is defined by a set of constraints, also known as breakpoints. Breakpoints refer to the viewport width and are device-agnostic, which means they are not constructed around specific devices and their resolutions, but instead, around the natural breakpoints of the layout itself.
 
 \begin{figure}[h]
   \begin{lstlisting}
@@ -422,9 +475,9 @@ Furthermore, if possible, the user must be given a way to abort the action in qu
   \label{fig:icons}
 \end{figure}
 
-    \subsubsection{Performance}
+  \subsection{Performance}
 
-Animations are a great way to tell
+Animations are a great way to enhance a user's experience with the application. They can help
 
 \chapter{Processes}
 
@@ -500,13 +553,7 @@ The combination of these three variables is the only unique identifier of a blue
 
 To view the blueprints, which only teachers are allowed to, the user must navigate to the state \code{Blueprints} which results in URL \code{/blueprints}. The items depicted are organized in stacks which reflect the logical distribution of blueprints among subjects. If only one subject is available, the user is presented directly with individual blueprints. Clear graphical distinction is made between what is considered stack and what is an individual ``sheet'' so that the user quickly recognizes which is which. Apart from using the browser history, the user can navigate the blueprints using a breadcrumbs navigation. This is possibly excessive in this case but makes more sense in different listings, for example when viewing exams where the structure depth can reach four levels. Also important is the fact that the current level is shared among all listings, which should help with the workflow. Anyhow, the listing is empty so far because we have yet to create our first blueprint.
 
-\begin{figure}
-  \setlength\fboxsep{0pt}
-  \setlength\fboxrule{0.2pt}
-  \fbox{\includegraphics[width=\textwidth]{listing.png}}
-  \caption{Example of listing}
-  \label{fig:listing}
-\end{figure}
+
 
     \subsection{New blueprint}
 
@@ -515,6 +562,14 @@ To create a new blueprint, the user must enter the state \code{NewBlueprint} whi
 When a term is picked, the user is presented with a modal window requesting the language of the exam. This step is skipped if no choice is available or only one language is left. Afterwards, the user can finally proceed with the new blueprint.
 
 The blueprint is initialized with one empty section that cannot be deleted and which is given a default name, unless changed. By using the controls, one can create another sections, move them up or down, or delete them along with their contents---as long as there is at least one section left. If needed, the user can also write a short introductory paragraph for the whole exam or for each of the sections.
+
+\begin{figure}[h]
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{new-blueprint.png}}
+  \caption{Creating blueprint}
+  \label{fig:new_blueprint}
+\end{figure}
 
     \subsubsection{Cloning blueprint}
 
@@ -530,7 +585,7 @@ The blueprint is initialized with one empty section that cannot be deleted and w
 
       \subsubsection{Taking exams}
 
-A student can enter the exam only if it is activated by a teacher. Before allowed further he is shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
+A student can enter the exam only when it is activated by a teacher. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
 
 \begin{figure}[h]
   \setlength\fboxsep{0pt}
@@ -542,7 +597,7 @@ A student can enter the exam only if it is activated by a teacher. Before allowe
 
 For a long time it was thought that people cheated by employing a rational cost/benefit analysis. When tempted to engage in an unethical behavior, they would weigh the chances of getting caught and the resulting punishment against the possible reward, and then act accordingly. However, experiments by Dr. Ariely and others have shown that far from being a deliberate, rational choice, dishonesty often results from psychological and environmental factors that people typically are not even aware of.
 
-Ariely discovered this truth by constructing a set of experiments with group of students from the universities of MIT and Yale. The participants sat in a classroom-like setting and were given tests. To create an incentive, the students were given a certain amount of money for a right solution. Each of the experiments was held under different conditions---making the cheating either less or more possible. In the end, Ariely found that given the chance, lots of people cheated---even if just a little.
+Ariely discovered this truth by constructing a set of experiments with group of students from the universities of MIT and Yale. The participants sat in a classroom-like setting and were given tests. To create an incentive, the students were also given a certain amount of money for every right answer. Each of the experiments was then held under different conditions---making the cheating either less or more possible. In the end, Ariely found that given the chance, lots of people cheated---even if just a little.
 
 Ariely then conducted another experiment, only this time the students had to sign a statement that said: ``I understand that this experiment falls under the guidelines of the MIT/Yale honor code.'' The act of signing resulted in zero cheating, and this was true even though neither university actually has an honor code. As Ariely concluded from this line of his research, ``recalling moral standards at the time of temptation can work wonders to decrease dishonest behavior and potentially prevent it altogether.''
 
@@ -551,6 +606,14 @@ Ariely then conducted another experiment, only this time the students had to sig
 
 
     \subsection{Exam evaluation}
+
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{listing.png}}
+  \caption{Example of listing}
+  \label{fig:listing}
+\end{figure}
 
 \setsecnumdepth{part}
 \chapter{Conclusion}
