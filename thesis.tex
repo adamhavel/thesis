@@ -16,7 +16,7 @@
 
 % \OnehalfSpacing
 
-\linespread{1.3}
+\linespread{1.32}
 
 \setsecheadstyle{\bfseries\LARGE\sffamily}
 \setsubsecheadstyle{\bfseries\large\sffamily}
@@ -122,7 +122,7 @@ The core of the application lies in the so called services which are objects tha
 
 Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, so that it can provide information about their state to users. That is the reason most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on a user's role. That is why we want to know the role before we start creating instances of services a user might not be able to use anyway---and because the majority of the services also create event listeners, which would only pose as potential memory hogs.
 
-This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. If a user successfully authenticates, it emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
+This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. When a user successfully authenticates, the service emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
 As mentioned before, contrary to controllers, the data saved in services remains
 
@@ -233,8 +233,10 @@ var circleHandler = {
       strokeWidth: 1,
       fill: 'rgba(255, 255, 255, .25)',
       stroke: 'rgba(0, 0, 0, .75)',
-      top: pointer.y, left: pointer.x,
-      originY: 'top', originX: 'left',
+      top: pointer.y,
+      left: pointer.x,
+      originY: 'top',
+      originX: 'left',
       selectable: false,
       rx: 1, ry: 1,
       perPixelTargetFind: true
@@ -255,8 +257,10 @@ var circleHandler = {
   mouseUp: function() {
     isMouseDown = false;
     obj.set({
-      width: obj.rx * 2, height: obj.ry * 2,
-      top: obj.top - obj.ry + 1, left: obj.left - obj.rx + 1
+      width: obj.rx * 2,
+      height: obj.ry * 2,
+      top: obj.top - obj.ry + 1,
+      left: obj.left - obj.rx + 1
     });
     canvas.renderAll();
     canvas.fire('object:modified', { target: obj });
@@ -267,7 +271,50 @@ var circleHandler = {
   \label{fig:tool_handler}
 \end{figure}
 
-The tools provide means to quickly draw basic shapes on the canvas and manipulate them as needed. This is achieved by registering a set of listeners that operate on mouse events. Whenever a tool is activated, all event listeners previously applied to the canvas are removed and a new set, distinct for each of the tools, is added instead. An example of a tool handler can be seen in the figure \ref{fig:tool_handler}.
+The tools provide means for drawing basic shapes on the canvas and manipulate them as needed. This is achieved by registering a set of listeners that operate on mouse events. Whenever a tool is activated, all event listeners previously applied to the canvas are removed and a new set, distinct for each of the tools, is added instead. An example of a tool handler can be seen in the figure \ref{fig:tool_handler}.
+
+If no content is given, the directive creates an object containing an empty array and an index set to zero. A clear canvas is then initialized and serialized into a JSON object using the library. This object is pushed into the hitherto empty array and after that, the whole package is fed to a \code{History} object, which represents the various states of the canvas. The moment the canvas is modified, it is once again serialized and the results get pushed into the array of states as before, while the index is raised by one. This essentially allows us to perform undo and redo operations on the canvas---both of which are provided through the public interface of the \code{History} object. The user can traverse the states back and forth, unless he makes a change to the canvas while in the middle of the list. When that happens, the array's tail is cut and with it all the states that were further down the list.
+
+If the directive instead receives a content in the form of a SVG image string, it is simply parsed by the library and converted into a canvas. The content object is then transformed into the structure described above, only this time, the first state is not clean but contains the provided image.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+api.undo = function() {
+  if (api.canUndo()) {
+    canvas.getObjects().forEach(function(obj) {
+      canvas.remove(obj);
+    });
+    canvas.loadFromJSON($scope.content.states[--$scope.content.currentState]);
+    if (!canvas.selection) {
+      canvas.getObjects().forEach(function(obj) {
+        obj.set({
+          selectable: false
+        });
+        obj.setCoords();
+      });
+    }
+    canvas.renderAll();
+    $scope.$apply();
+  }
+};
+
+canvas.on('object:modified', function() {
+  if (content.currentState < content.states.length - 1) {
+    content.states = content.states.slice(0, content.currentState + 1);
+  }
+  if (content.currentState < limit - 1) {
+    content.currentState++;
+  }
+  if (content.states.length === limit) {
+    content.states.shift();
+  }
+  content.states.push(angular.toJson(canvas));
+  $scope.$apply();
+});
+  \end{lstlisting}
+  \caption{Example from \code{History} module}
+  \label{fig:history_module}
+\end{figure}
 
   \subsection{Routing}
 
@@ -281,15 +328,30 @@ The look and feel of the application is described using CSS style sheets. While 
 
     \subsubsection{Methodology}
 
-Before ...
+\begin{figure}[h]
+  \begin{lstlisting}
+.component {
+  &__element {}
+  &--modifier {}
+}
 
-Another reason is performance. The selector engine parses a query from right to left. This means that if given the selector \code{.site-nav a}, it first matches all the \code{a} elements on a page. For each of those, the engine then has to traverse up the node tree to find out whether a parent with the class \code{site-nav} exists. This part can be greatly reduced by using \code{.site-nav > a}, but such selector is not always possible. If, on the other hand, the \code{a} elements are given a class \code{site-nav\_\_item}, the selection process is reduced to a simple lookup for all the elements with the class.
+.component {}
+.component__element {}
+.component--modifier {}
+  \end{lstlisting}
+  \caption{\textit{BEM} methodology pattern}
+  \label{fig:bem_pattern}
+\end{figure}
+
+When it comes to structuring the style sheets, it is always a good idea to choose some kind of methodology and stick to it if possible. \textit{BEM}---meaning block, element, modifier---is a front-end methodology that introduces a way for naming CSS classes to give them more transparency and meaning. It follows the pattern shown in the figure \ref{fig:bem_pattern}, where \code{.component} represents some sort of higher level abstraction, \code{component\_\_element} refers to its descendant that helps form it as a whole, and \code{.component--modifier} stands for a different state or version. The first block in the figure is written in \textit{Sass} notation while the second one shows what would be the output in vanilla CSS.
+
+The strength of \textit{BEM} lies in the fact that anyone reading the markup can easily tell the relationship between different elements and does not have to guess by judging the structure. Yet another reason is performance. The selector engine parses a query from right to left which means that if given for example the selector \code{.site-nav a}, it first matches all \code{a} elements on a page. For each of those, the engine then has to traverse up the node tree to find out whether a parent with the class \code{site-nav} exists---using the selector \code{.site-nav > a} can help but is not always possible. If, on the other hand, the \code{a} elements are given the class \code{site-nav\_\_item}, the selection process is reduced to a simple lookup of elements matching the class.
 
 The drawback of this methodology is the considerable increase of class declarations in the document structure, which in turn leads to larger files. However, the overhead is greatly reduced when serving files using a GZip compression---the often repeated class names tend to compress well.
 
     \subsubsection{Breakpoints}
 
-A grid system is almost always a necessity when constructing a web layout. While CSS offers its own grid layout module, the support among browsers is unfortunately almost nonexistent. It is therefore necessary to build one's own solution. Notwithstanding the final approach, any grid system should be responsive to changes in viewport width. This can be done by creating classes that set a grid's item to different widths depending on the currently active media query---a conditional block that is defined by a set of constraints, also known as breakpoints. Breakpoints refer to the viewport width and are device-agnostic, which means they are not constructed around specific devices and their resolutions, but instead, around the natural breakpoints of the layout itself.
+A grid system is almost always a necessity when constructing a web layout. While CSS offers its own grid layout module, the support among browsers is unfortunately almost nonexistent. It is therefore necessary to build one's own solution. Notwithstanding the final approach, any grid system should be responsive to changes in viewport width. This can be done by creating classes that set a grid's item to different widths depending on the currently active media query---a conditional block that is defined by a set of constraints, also known as breakpoints. The breakpoints refer to the viewport width and are device-agnostic, which means they are not constructed around specific devices and their resolutions, but instead, around the natural breakpoints of the layout itself.
 
 \begin{figure}[h]
   \begin{lstlisting}
@@ -637,6 +699,7 @@ Ariely then conducted another experiment, only this time the students had to sig
   \item[JSON] JavaScript Object notation
   \item[LDAP] Lightweight Directory Access Protocol
   \item[REST] Representational State Transfer
+  \item[SVG] Scalable Vector Graphics
   \item[XML] Extensible Markup Language
 \end{description}
 
