@@ -112,7 +112,7 @@
 
       \subsubsection{Websockets}
 
-The WebSocket protocol is a web technology providing full-duplex communications channels over a single persistent TCP connection.
+% The WebSocket protocol is a web technology providing full-duplex communications channels over a single persistent TCP connection.
 
 \section{Client}
 
@@ -124,13 +124,15 @@ Much of the core functionality is handled by aptly named services such as \code{
 
 This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. When a user successfully authenticates, the service emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
-As mentioned before, contrary to controllers, the data saved in services remains
+    \subsubsection{Persistence}
+
+As mentioned before, the services are used to hold data among different states and controllers. But if not taken care of, the moment the browser refreshed or reloaded the page, all that data would be lost and services would have to initialize afresh. To handle this situation, a \code{beforeunload} event listener is attached to the \code{window} object. Whenever the page is closed or reloaded, the listener emits a \code{save} message to \code{\$rootScope}. Any service already holding data responds by serializing the data using the \code{JSON.stringify()} function and saving the result into \code{localStorage}---if not supported, several fallbacks are tried before saving as a cookie. While initializing, each service then peeks in the storage first and if a previously saved state is found, it is loaded and deserialized. If not, the service continues normally.
 
   \subsection{Directives}
 
-Directives are what could be considered AngularJS's answer to Web components. They are composed of HTML templates and logic, encapsulated together to form small and reusable units, camouflaged to the DOM either as custom elements or attributes. They can be set up in a way that makes their innards visible to the outside world. Most of the time, though, they create what is called the Shadow DOM, having their own isolate scope (and \code{\$scope}). Directives also provide a rare occasion for a direct interaction with the DOM---otherwise a forbidden fruit in AngularJS.
+Directives are what could be considered \textit{AngularJS's} answer to Web components. They are composed of HTML templates and logic, encapsulated together to form small and reusable units, camouflaged to the DOM either as custom elements or attributes. They can be set up in a way that makes their innards visible to the outside world. Most of the time, though, they create what is called the Shadow DOM, having their own isolate scope (and \code{\$scope}). Directives also provide a rare occasion for a direct interaction with the DOM---otherwise a forbidden fruit in \textit{AngularJS}.
 
-In the application, directives are used mostly in the form of custom elements that uses native HTML elements for their structure and add logic to support manipulation with their contents. In most cases the interactivity is easily achieved by adding the attribute \code{contenteditable}. A problem lies in the fact, that unlike \code{input} elements which natively support AngularJS two-way binding through the \code{ng-bind} directive, other elements do not bind to a model, even if made editable in this way. Fortunately, this can be solved by using another custom directive that is applied alongside the \code{contenteditable} attribute.
+In the application, directives are used mostly in the form of custom elements that uses native HTML elements for their structure and add logic to support manipulation with their contents. In most cases the interactivity is easily achieved by adding the attribute \code{contenteditable}. A problem lies in the fact, that unlike \code{input} elements which natively support \textit{AngularJS} two-way binding through the \code{ng-bind} directive, other elements do not bind to a model, even if made editable in this way. Fortunately, this can be solved by using another custom directive that is applied alongside the \code{contenteditable} attribute.
 
 The directive can be seen in the figure \ref{fig:contenteditable_directive}. It uses the internal \code{ngModel} service to replicate the native binding mechanism. It also attaches an event listener that is triggered the moment a user tries to paste data into the element. Normally, any style associated with that data would be passed along as well---a highly undesirable behavior at best. The event is therefore hijacked and implemented in such a way that the data is taken directly from the clipboard as a plain text and inserted manually.
 
@@ -328,6 +330,8 @@ The look and feel of the application is described using CSS style sheets. While 
 
     \subsubsection{Methodology}
 
+When it comes to structuring the style sheets, it is always a good idea to choose some kind of methodology and stick to it if possible. \textit{BEM}---meaning block, element, modifier---is a front-end methodology that introduces a way for naming CSS classes to give them more transparency and meaning. It follows the pattern shown in the figure \ref{fig:bem_pattern}, where \code{.component} represents some sort of higher level abstraction, \code{component\_\_element} refers to its descendant that helps form it as a whole, and \code{.component--modifier} stands for a different state or version. The first block in the figure is written in \textit{Sass} notation while the second one shows what would be the output in vanilla CSS.
+
 \begin{figure}[h]
   \begin{lstlisting}
 .component {
@@ -342,8 +346,6 @@ The look and feel of the application is described using CSS style sheets. While 
   \caption{\textit{BEM} methodology pattern}
   \label{fig:bem_pattern}
 \end{figure}
-
-When it comes to structuring the style sheets, it is always a good idea to choose some kind of methodology and stick to it if possible. \textit{BEM}---meaning block, element, modifier---is a front-end methodology that introduces a way for naming CSS classes to give them more transparency and meaning. It follows the pattern shown in the figure \ref{fig:bem_pattern}, where \code{.component} represents some sort of higher level abstraction, \code{component\_\_element} refers to its descendant that helps form it as a whole, and \code{.component--modifier} stands for a different state or version. The first block in the figure is written in \textit{Sass} notation while the second one shows what would be the output in vanilla CSS.
 
 The strength of \textit{BEM} lies in the fact that anyone reading the markup can easily tell the relationship between different elements and does not have to guess by judging the structure. Yet another reason is performance. The selector engine parses a query from right to left which means that if given for example the selector \code{.site-nav a}, it first matches all \code{a} elements on a page. For each of those, the engine then has to traverse up the node tree to find out whether a parent with the class \code{site-nav} exists---using the selector \code{.site-nav > a} can help but is not always possible. If, on the other hand, the \code{a} elements are given the class \code{site-nav\_\_item}, the selection process is reduced to a simple lookup of elements matching the class.
 
@@ -381,7 +383,13 @@ Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakp
 
   \subsection{Optimization}
 
-    \subsubsection{Task automation}
+Front-end optimization refers to a set of techniques that are used to enhance the performance and efficiency of any application running in browser. These include  minifying the style sheet, reducing the amount of HTTP requests, the concatenation of scripts, the so called lazy loading of resources, and many others.
+
+The main bottleneck of browsing speed, as opposed to video streaming, is not network bandwidth but latency. Because of this and due to the inherent qualities of the HTTP/1.1 protocol, it is crucial to reduce the number of HTTP requests on the page by any means necessary. This will hold true until the new version of HTTP---based on the Google's \textit{SPDY} protocol---receives widespread adoption.
+
+The first step usually entails concatenating all JavaScript libraries and client-side code into one file and minifying the result. Because loading an external JavaScript is a blocking operation---unless loaded asynchronously---it is a good idea to place the \code{script} element that refers the resulting code bundle as the last item of the \code{body} element. That way, the HTML and CSS can start loading first.
+
+In order not to waste bandwidth, any code that is not essential for the main functionality of the application is loaded only if demanded. This is for example the case for the \textit{Fabric.js} library---loading 204 kB of possibly unnecessary code might be fine while browsing on a home network, but not so much on a mobile data plan.
 
 \section{Interface}
 
@@ -539,7 +547,7 @@ Furthermore, if possible, the user must be given a way to abort the action in qu
 
   \subsection{Performance}
 
-Animations are a great way to enhance a user's experience with the application. They can help
+% Animations are a great way to enhance a user's experience with the application. They can help
 
 \chapter{Processes}
 
