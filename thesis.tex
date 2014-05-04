@@ -116,6 +116,8 @@
 
 \section{Client}
 
+  ...
+
   \subsection{Services}
 
 The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in AngularJS like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
@@ -320,6 +322,8 @@ canvas.on('object:modified', function() {
 
   \subsection{Routing}
 
+  ...
+
   \subsection{Style sheets}
 
 The look and feel of the application is described using CSS style sheets. While fine by itself for small applications, CSS is highly unsuitable for more complex projects, due to its inherent inability to create modules. Even though such thing is actually possible through the CSS function \code{@import}, the performance drawbacks are so severe that it stops being a viable option. To supply this need, some kind of CSS preprocessor therefore must be used.
@@ -389,7 +393,9 @@ The main bottleneck of browsing speed, as opposed to video streaming, is not net
 
 The first step usually entails concatenating all JavaScript libraries and client-side code into one file and minifying the result. Because loading an external JavaScript is a blocking operation---unless loaded asynchronously---it is a good idea to place the \code{script} element that refers the resulting code bundle as the last item of the \code{body} element. That way, the HTML and CSS can start loading first.
 
-In order not to waste bandwidth, any code that is not essential for the main functionality of the application is loaded only if demanded. This is for example the case for the \textit{Fabric.js} library---loading 204 kB of possibly unnecessary code might be fine while browsing on a home network, but not so much on a mobile data plan.
+In order not to waste bandwidth, any code that is not essential for the main functionality of the application is loaded only if demanded. This is for example the case for the \textit{Fabric.js} library---downloading 204 kB of possibly unnecessary code might be fine while browsing on a home network, but not so much on a mobile data plan.
+
+...
 
 \section{Interface}
 
@@ -537,6 +543,8 @@ Furthermore, if possible, the user must be given a way to abort the action in qu
 
     \subsubsection{Icons}
 
+    ...
+
 \begin{figure}[H]
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
@@ -546,6 +554,8 @@ Furthermore, if possible, the user must be given a way to abort the action in qu
 \end{figure}
 
   \subsection{Performance}
+
+  ...
 
 % Animations are a great way to enhance a user's experience with the application. They can help
 
@@ -623,8 +633,6 @@ The combination of these three variables is the only unique identifier of a blue
 
 To view the blueprints, which only teachers are allowed to, the user must navigate to the state \code{Blueprints} which results in URL \code{/blueprints}. The items depicted are organized in stacks which reflect the logical distribution of blueprints among subjects. If only one subject is available, the user is presented directly with individual blueprints. Clear graphical distinction is made between what is considered stack and what is an individual ``sheet'' so that the user quickly recognizes which is which. Apart from using the browser history, the user can navigate the blueprints using a breadcrumbs navigation. This is possibly excessive in this case but makes more sense in different listings, for example when viewing exams where the structure depth can reach four levels. Also important is the fact that the current level is shared among all listings, which should help with the workflow. Anyhow, the listing is empty so far because we have yet to create our first blueprint.
 
-
-
     \subsection{New blueprint}
 
 To create a new blueprint, the user must enter the state \code{NewBlueprint} which is reflected in the URL as \code{/new}. She is then shown a listing similar to the one before, only this time with exam terms instead of blueprints. Terms are the particular dates on which an exam takes place---we can get those by reaching the \textit{KOSapi} resource \code{/courses/\{subject\}/exams}, using each of the user's subjects for the variable, one after another. The client actually asks the application server resource \code{api/examterms/\{subject\}} which delegates the request to the aforementioned endpoint. The result is then stripped of any term that is already fully occupied with blueprints in the database.
@@ -633,15 +641,67 @@ When a term is picked, the user is presented with a modal window requesting the 
 
 The blueprint is initialized with one empty section that cannot be deleted and which is given a default name, unless changed. By using the controls, one can create another sections, move them up or down, or delete them along with their contents---as long as there is at least one section left. If needed, the user can also write a short introductory paragraph for the whole exam or for each of the sections.
 
-\begin{figure}[h]
+When a new question is added to a section, the user must fill it up with content, which is divided into two parts---the body of the question and the answer. Both consist of a set of content blocks of different types that can be moved up or down the body and removed individually. This is achieved through controls pictured in the figure \ref{fig:new_blueprint}. When deleting a block---be it a chunk, a question or a whole section---the user is prompted if she really wishes to continue. If empty, the block is removed automatically.
+
+\begin{figure}
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
   \fbox{\includegraphics[width=\textwidth]{new-blueprint.png}}
-  \caption{Creating blueprint}
+  \caption{Creating a blueprint}
   \label{fig:new_blueprint}
 \end{figure}
 
+The types of content that can be added to the question's body and answer are a little different, depending on the target. It would for example make no sense to add an external image to the answer or a list of options into the body. Otherwise, the choices are the same---the user can add a paragraph of text, a snippet of code, a list, or a canvas. In the case of a snippet, the user has to pick a programming language, which can be changed anytime later. If adding an external image, a link must be provided which is then validated by creating a JavaScript \code{Image} object having the URL for its source. If the object throws an error, it means the link is either broken or that the resource is not a valid image. Since downloading the image might take some time, it is necessary that the function---seen in the figure \ref{fig:image_validation}---returns a promise object, constructed via the service \code{\$q}. Either way, the \code{Image} object is then destroyed, even if having passed the test---the image is already in the cache so there is no reason to keep it in the memory.
+
+\begin{figure}[h]
+  \begin{lstlisting}[language=JavaScript]
+function isImage(src) {
+  var deferred = $q.defer(),
+      image = new Image();
+
+  image.addEventListener('error', function() {
+    deferred.resolve(false);
+  });
+  image.addEventListener('load', function() {
+    deferred.resolve(true);
+  });
+
+  image.src = src;
+  image = null;
+
+  return deferred.promise;
+}
+  \end{lstlisting}
+  \caption{Validating an image}
+  \label{fig:image_validation}
+\end{figure}
+
+After creating the answer which usually consists of just one chunk of content, the user can fill it with a solution. This will help in the future evaluation. It is also possible to create a hint that takes a form of a pre-filled answer. When added, the hint has the same content as the solution. It is therefore necessary to delete anything the user creating the blueprint does not wish the students to see.
+
+When satisfied, the user can save the blueprint in the database. First, the blueprint is checked as to whether it meets the necessary conditions---it must contain at least one question and no question can be empty or without a defined answer. The blueprint is then saved into \code{localStorage}, in case something goes wrong. Only when successfully backed up, the process continues by converting chunks of the canvas type into SVG strings, and stripping snippets of any HTML---at least the kind that has been used for highlighting the code.
+
+The blueprint is then finally passed to the server-side resource by means of \code{POST}. Before storing in the database, any SVG string inside the blueprint is optimized using the \code{SVGO} library---doing this can greatly reduce the size of the string.
+
     \subsubsection{Cloning blueprint}
+
+While creating a blueprint, the user can browse the old blueprints via the \code{Blueprints} state like she would normally do. The difference is that she is now given an option to copy an already defined question into the new blueprint. It is also possible to copy an entire blueprint---any work already done will be replaced by an exact copy of the given blueprint, except the main identifiers like subject or date, which remain intact.
+
+One of the easiest and fastest way to clone an object in JavaScript is to use the complementary functions \code{JSON.stringify()} and \code{JSON.parse()} in sequence. However, when cloning the blueprint, an extra caution must be taken not to copy properties such as \code{\_id}, created while previously saving the object in the database. Otherwise, the new blueprint could not be stored. This can be done by employing the optional second parameter of \code{JSON.stringify()} which expects a function. The function can be used to reject a property depending on its name or value, and can be seen in the figure \ref{fig:cloning_blueprint}.
+
+\begin{figure}[h]
+  \begin{lstlisting}[language=JavaScript]
+NewBlueprint.data.sections = JSON.parse(JSON.stringify($scope.blueprint.sections, function stripJunk(key, value) {
+  if (/^[\$_]/.test(key)) {
+    return undefined;
+  }
+  return value;
+}));
+  \end{lstlisting}
+  \caption{Cloning a blueprint}
+  \label{fig:cloning_blueprint}
+\end{figure}
+
+
 
     \subsubsection{Modifying blueprint}
 
