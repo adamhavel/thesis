@@ -315,7 +315,7 @@ sp\^ osobom, ktor\'y nezni\v zuje hodnotu Diela (vr\'atane komer\v cn\'eho vyu\v
       \if\thetitle\empty
          \ClassError{FITthesis}{Thesis' title unspecified}{Specify title of this thesis using the \protect\title\space command.}
       \else
-         \noindent\textbf{\LARGE \begin{flushleft}\thetitle\end{flushleft}}
+         \noindent\textbf{\LARGE \begin{flushleft}Application for Creating, Taking\\and Evaluating Written Exams\end{flushleft}}
       \fi
 
       \vspace{4mm}

@@ -72,7 +72,7 @@
 % %\usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
 
 \department{Department of Software Engineering}
-\title{Application for Creating, Taking\\ and Evaluating Written Exams}
+\title{Application for Creating, Taking and Evaluating Written Exams}
 \authorGN{Adam}
 \authorFN{Havel}
 \author{Adam Havel}
@@ -138,9 +138,9 @@
 
   \subsection{Services}
 
-The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in AngularJS like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
+The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in \textit{AngularJS} like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
-Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, so that it can provide information about their state to users. That is the reason most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on a user's role. That is why we want to know the role before we start creating instances of services a user might not be able to use anyway---and because the majority of the services also create event listeners, which would only pose as potential memory hogs.
+Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, in order to provide information about their state to users. It is for these reasons that most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on the user role. That is why we want to know the role before creating instances of services a user might not be able to use anyway---and because the majority of the services also create event listeners, which would only pose as potential memory hogs.
 
 This is where the \code{User} service comes in play. It is able to tell if a user is logged in and what is eventually his role and then provide that information to other components. When a user successfully authenticates, the service emits a \code{loggedIn} message to \code{\$rootScope}---kind of a common ground for all components that depend on it. Any service listening will receive the message and inspect the value of the role in return. Knowing that information, it can safely decide whether to self-initialize or not.
 
@@ -401,7 +401,7 @@ body {
   \label{fig:sass_breakpoints}
 \end{figure}
 
-Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakpoints}, work well while used in the style sheets, sometimes we need to employ media queries in JavaScript, too. For example, the client might decide to load certain piece of code only if the screen is large enough, in order not to waste a user's bandwidth. While JavaScript supports media queries on its own, to use it means facing a different kind of problem: we would have to define the breakpoints on two places and therefore repeat ourselves. To solve this conundrum, a trick is used. The \code{body} element is given an \code{animation-name}---harmless on its own, unless an animation with the same name is found. The property is then filled with the different breakpoint string identifiers, depending on the currently active media query. All that is left to do is to define a function in JavaScript that returns the current value of the \code{animation-name} property---this is achieved by calling \code{getPropertyValue('animation-name')} on the computed-style object of the \code{body} element. Using this technique, the code remains DRY and the active media query is always within reach. An even better solution would be to use the \code{content} property of a pseudo-element attached to the \code{body}---unfortunately, \textit{Google Chrome} currently cannot retrieve this value by means of JavaScript.
+Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakpoints}, work well while used in the style sheets, sometimes we need to employ media queries in JavaScript, too. For example, the client might decide to load certain piece of code only if the screen is large enough, in order not to waste a user's bandwidth. While JavaScript supports media queries on its own, to use it means facing a different kind of problem: we would have to define the breakpoints on two places and therefore repeat ourselves. To solve this conundrum, a trick is used. The \code{body} element is given an \code{animation-name}---harmless on its own, unless an animation with the same name is found. The property is then filled with the different breakpoint string identifiers, depending on the currently active media query. All that is left to do is to define a function in JavaScript that returns the current value of the \code{animation-name} property---this is achieved by calling \code{getPropertyValue('animation-name')} on the computed-style object of the \code{body} element. Using this technique, the code remains DRY and the active media query is always within reach. An even better solution would be to utilize the \code{content} property of a pseudo-element attached to the \code{body}---unfortunately, \textit{Google Chrome} currently cannot retrieve this value using JavaScript only.
 
   \subsection{Optimization}
 
@@ -742,15 +742,15 @@ Teachers may also decide to collect the tests early, which has the same results.
 
 A student can enter the exam only when a teacher is already present. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
 
-\begin{figure}[h]
+For a long time it was thought that people cheated by employing a rational cost/benefit analysis. When tempted to engage in an unethical behavior, they would weigh the chances of getting caught and the resulting punishment against the possible reward, and then act accordingly. However, experiments by Dr. Ariely and others have shown that far from being a deliberate, rational choice, dishonesty often results from psychological and environmental factors that people typically are not even aware of.
+
+\begin{figure}
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
   \fbox{\includegraphics[width=\textwidth]{ethical-codex.png}}
-  \caption{Modal window}
+  \caption{Acknowledging the Ethical codex}
   \label{fig:ethical-codex}
 \end{figure}
-
-For a long time it was thought that people cheated by employing a rational cost/benefit analysis. When tempted to engage in an unethical behavior, they would weigh the chances of getting caught and the resulting punishment against the possible reward, and then act accordingly. However, experiments by Dr. Ariely and others have shown that far from being a deliberate, rational choice, dishonesty often results from psychological and environmental factors that people typically are not even aware of.
 
 Ariely discovered this truth by constructing a set of experiments with group of students from the universities of MIT and Yale. The participants sat in a classroom-like setting and were given tests. To create an incentive, the students were also given a certain amount of money for every right answer. Each of the experiments was then held under different conditions---making the cheating either less or more possible. In the end, Ariely found that given the chance, lots of people cheated---even if just a little.
 
@@ -762,17 +762,31 @@ The moment the user starts to answer the questions, his responses are sent to th
 
 A student can also ``hand in'' the test early, if he wishes to. The data is then prepared in the same way as in the process of creating a blueprint---canvases are transformed into SVG strings and snippets are stripped of any HTML. The result is then sent to the server and if successfully stored, the student is notified and redirected to the homepage, his navigation rights returned.
 
-      \subsubsection{Cheating prevention}
+      \subsubsection{Prevention of cheating}
 
-Hopefully not an omnipresent factor, cheating still has to be taken into account---there are several ways the student could take advantage of the fact that the exam is taken on computer, even in the case of a restricted network access. In order to prevent---and possibly discourage---the student from any attempt at cheating, two different techniques are used.
+While hopefully not an omnipresent factor, cheating still has to be taken into account---there are several ways the student could take advantage of the fact that the exam is taken on computer, even in the case of restricted network access. In order to prevent---and possibly discourage---the student from any attempt at cheating, two different techniques are used.
 
-The first one employs the \code{blur} event of the \code{window} object, which is fired whenever the page with the application loses focus---either because the tabs in the browser were switched or because the browser itself lost focus.
+The first one employs the \code{blur} event of the \code{window} object which is fired whenever a page loses focus---either because the tabs in the browser were switched or because the browser itself lost focus in favor of some other application. When that happens, all teachers at the exam receives a notification pointing at the incriminated student.
+
+Nonetheless, if applied by itself, a resourceful student still might think of a way to evade this countermeasure. If he prepared a file with notes in advance and resized the browser window so that the file can be seen---without having to switch between the applications---the first technique alone cannot stop him.
+
+To handle the aforementioned situation, a different technique is utilized. Whenever a student tries to resize the browser, an event is fired. The client application on the student's computer then calculates the usage of the screen which is achieved by dividing the available viewport of the computer (\code{window.screen.availWidth} × \code{window.screen.availHeight}) by the dimensions of the browser window (\code{window.outerWidth} × \code{window.outerHeight}). If under 100 \%, teachers are notified and shown a modal which informs them of the student in question and the percentage of screen covered by the browser. The same calculation also commences automatically at an exam start, in case a student resizes the screen in advance.
 
 
+
+\begin{figure}
+  \setlength\fboxsep{0pt}
+  \setlength\fboxrule{0.2pt}
+  \fbox{\includegraphics[width=\textwidth]{cheating.png}}
+  \caption{Notification of window resize}
+  \label{fig:cheating}
+\end{figure}
 
     \subsection{Evaluation}
 
-\begin{figure}
+    ...
+
+\begin{figure}[H]
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
   \fbox{\includegraphics[width=\textwidth]{listing.png}}
