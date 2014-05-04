@@ -725,16 +725,18 @@ When referring to exams, it is important to note the difference between an exam 
 
     \subsection{Viewing exams}
 
-When viewing the exams via the state \code{Exams} with the URL \code{/exams}, the individual items represent available exam terms. The definition of what available means differs depending on the role of a user---a teacher sees any pending exam term that is listed in \textit{KOS} and belongs to one of his subject. A student, on the other hand, is shown only the terms for which he applied in advance. Both lists can be obtained by using the already mentioned \code{api/examterms} resource.
+When viewing the exams via the state \code{Exams} located at \code{/exams}, the individual items represent available exam terms. The definition of what available means differs depending on the role of a user---a teacher sees any pending exam term that is listed in \textit{KOS} and belongs to one of his subject. A student, on the other hand, is shown only the terms for which he applied in advance. Both lists can be obtained by using the already mentioned \code{api/examterms} resource.
 
     \subsection{Ongoing exams}
 
-By selecting an exam term, the client creates a new WebSocket connection which will be used by the server to handle communication among different users on the same exam. While this holds true for both students and teachers, what follows after is largely dependent on the user's role, it will therefore be explained separately.
+By selecting an exam term, the client creates a new WebSocket connection which will be used by the server to handle communication among different users at the same exam. While this holds true for both students and teachers, what follows after is largely dependent on the user's role, it will therefore be explained separately.
 
       \subsubsection{Watching over exams}
 
-A teacher can see the exam---exactly as it will be shown to students---right from the beginning. Furthermore, he is given the option to temporarily show the solution to any question. Until the moment the first student enters, the teacher can also leave and therefore abort the exam. Whenever a student  the teacher is immediately sent a message containing information about the student.
-However, it is also possible that there are more than one teacher on the exam. If any of these arrives late and identifies himself as a teacher, he is sent a list of students present
+A teacher can see the exam---exactly as it will be shown to students---right from the beginning. Furthermore, he is given the option to temporarily show the solution to any question. Until the moment the first student appears, he can also leave and therefore abort the exam. Whenever a student enters the exam, the teacher is sent a message containing all the necessary information. Since there can be more than one teacher watching over an exam, the message is actually sent to all of them. If any of these arrives late and identifies himself as a teacher, he is provided a list of students that are already present at the exam.
+
+After making sure that all students at the exam are also physically present in the same room---which can be verified by the application itself by checking IP addresses of all the users and ensuring they all share the same subnetwork mask---any of the teachers can ``hand out'' the tests. That entails setting the exam duration. If necessary, the timer can be later adjusted. Nonetheless, when the time runs out, the exam is finished and all users are forced to leave.
+Teachers may also decide to collect the tests early, which results in the same.
 
       \subsubsection{Taking exams}
 
