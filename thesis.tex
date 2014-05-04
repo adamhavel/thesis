@@ -104,15 +104,33 @@
 
       \subsubsection{Structure}
 
+      ...
+
     \subsection{Database}
+
+      ...
+
+      \subsubsection{Data model}
+
+      ...
 
     \subsection{Internal communication}
 
+      ...
+
       \subsubsection{API}
+
+      ...
 
       \subsubsection{Websockets}
 
+      ...
+
 % The WebSocket protocol is a web technology providing full-duplex communications channels over a single persistent TCP connection.
+
+    \subsection{Integration of external resources}
+
+    ...
 
 \section{Client}
 
@@ -216,7 +234,7 @@ $element.on('keydown', function(e) {
   }
 });
   \end{lstlisting}
-  \caption{Logic of the List directive}
+  \caption{Use of event listeners in directives}
   \label{fig:list_directive}
 \end{figure}
 
@@ -635,7 +653,7 @@ To view the blueprints, which only teachers are allowed to, the user must naviga
 
     \subsection{New blueprint}
 
-To create a new blueprint, the user must enter the state \code{NewBlueprint} which is reflected in the URL as \code{/new}. She is then shown a listing similar to the one before, only this time with exam terms instead of blueprints. Terms are the particular dates on which an exam takes place---we can get those by reaching the \textit{KOSapi} resource \code{/courses/\{subject\}/exams}, using each of the user's subjects for the variable, one after another. The client actually asks the application server resource \code{api/examterms/\{subject\}} which delegates the request to the aforementioned endpoint. The result is then stripped of any term that is already fully occupied with blueprints in the database.
+To create a new blueprint, the user must enter the state \code{NewBlueprint} which is reflected in the URL as \code{/new}. She is then shown a listing similar to the one before, only this time with exam terms instead of blueprints. Terms are the particular dates on which an exam takes place---we can get those by reaching the \textit{KOSapi} resource \code{/courses/\{subject\}/exams}, using each of the user's subjects for the variable, one after another. The client actually asks the application server resource \code{api/examterms} which delegates the request to the aforementioned endpoint. The result is then stripped of any term that is already fully occupied with blueprints in the database.
 
 When a term is picked, the user is presented with a modal window requesting the language of the exam. This step is skipped if no choice is available or only one language is left. Afterwards, the user can finally proceed with the new blueprint.
 
@@ -678,15 +696,13 @@ function isImage(src) {
 
 After creating the answer which usually consists of just one chunk of content, the user can fill it with a solution. This will help in the future evaluation. It is also possible to create a hint that takes a form of a pre-filled answer. When added, the hint has the same content as the solution. It is therefore necessary to delete anything the user creating the blueprint does not wish the students to see.
 
-When satisfied, the user can save the blueprint in the database. First, the blueprint is checked as to whether it meets the necessary conditions---it must contain at least one question and no question can be empty or without a defined answer. The blueprint is then saved into \code{localStorage}, in case something goes wrong. Only when successfully backed up, the process continues by converting chunks of the canvas type into SVG strings, and stripping snippets of any HTML---at least the kind that has been used for highlighting the code.
+When finished, the user can save the blueprint in the database. First, the blueprint is checked as to whether it meets the necessary conditions---it must contain at least one question and no question can be empty or without a defined answer. The blueprint is then saved into \code{localStorage}, in case something goes wrong. Only when successfully backed up, the process continues by converting chunks of the canvas type into SVG strings, and stripping snippets of any HTML---at least the kind that has been used for highlighting the code.
 
-The blueprint is then finally passed to the server-side resource by means of \code{POST}. Before storing in the database, any SVG string inside the blueprint is optimized using the \code{SVGO} library---doing this can greatly reduce the size of the string.
+The blueprint is then finally passed to the server-side resource by means of \code{POST}. Before storing in the database, any SVG string inside the blueprint is optimized using the \code{SVGO} library---doing this can greatly reduce the size of the string. A blueprint stored in this way can later be modified, but only if it has not yet been used for an exam.
 
     \subsubsection{Cloning blueprint}
 
 While creating a blueprint, the user can browse the old blueprints via the \code{Blueprints} state like she would normally do. The difference is that she is now given an option to copy an already defined question into the new blueprint. It is also possible to copy an entire blueprint---any work already done will be replaced by an exact copy of the given blueprint, except the main identifiers like subject or date, which remain intact.
-
-One of the easiest and fastest way to clone an object in JavaScript is to use the complementary functions \code{JSON.stringify()} and \code{JSON.parse()} in sequence. However, when cloning the blueprint, an extra caution must be taken not to copy properties such as \code{\_id}, created while previously saving the object in the database. Otherwise, the new blueprint could not be stored. This can be done by employing the optional second parameter of \code{JSON.stringify()} which expects a function. The function can be used to reject a property depending on its name or value, and can be seen in the figure \ref{fig:cloning_blueprint}.
 
 \begin{figure}[h]
   \begin{lstlisting}[language=JavaScript]
@@ -701,21 +717,28 @@ NewBlueprint.data.sections = JSON.parse(JSON.stringify($scope.blueprint.sections
   \label{fig:cloning_blueprint}
 \end{figure}
 
-
-
-    \subsubsection{Modifying blueprint}
+One of the easiest and fastest way to clone an object in JavaScript is to use the complementary functions \code{JSON.stringify()} and \code{JSON.parse()} in sequence. However, when cloning the blueprint, an extra caution must be taken not to copy properties such as \code{\_id}, created while previously saving the object in the database. Otherwise, the new blueprint could not be stored. This can be done by employing the optional second parameter of \code{JSON.stringify()} which expects a function. The function can be used to reject a property depending on its name or value, and can be seen in the figure \ref{fig:cloning_blueprint}.
 
   \section{Exams}
 
+When referring to exams, it is important to note the difference between an exam term, as described before, and an exam in the sense of a particular student's exam.
+
     \subsection{Viewing exams}
+
+When viewing the exams via the state \code{Exams} with the URL \code{/exams}, the individual items represent available exam terms. The definition of what available means differs depending on the role of a user---a teacher sees any pending exam term that is listed in \textit{KOS} and belongs to one of his subject. A student, on the other hand, is shown only the terms for which he applied in advance. Both lists can be obtained by using the already mentioned \code{api/examterms} resource.
 
     \subsection{Ongoing exams}
 
+By selecting an exam term, the client creates a new WebSocket connection which will be used by the server to handle communication among different users on the same exam. While this holds true for both students and teachers, what follows after is largely dependent on the user's role, it will therefore be explained separately.
+
       \subsubsection{Watching over exams}
+
+A teacher can see the exam---exactly as it will be shown to students---right from the beginning. Furthermore, he is given the option to temporarily show the solution to any question. Until the moment the first student enters, the teacher can also leave and therefore abort the exam. Whenever a student  the teacher is immediately sent a message containing information about the student.
+However, it is also possible that there are more than one teacher on the exam. If any of these arrives late and identifies himself as a teacher, he is sent a list of students present
 
       \subsubsection{Taking exams}
 
-A student can enter the exam only when it is activated by a teacher. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
+A student can enter the exam only when a teacher is already present. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
 
 \begin{figure}[h]
   \setlength\fboxsep{0pt}
@@ -735,7 +758,7 @@ Ariely then conducted another experiment, only this time the students had to sig
 
 
 
-    \subsection{Exam evaluation}
+    \subsection{Evaluation}
 
 \begin{figure}
   \setlength\fboxsep{0pt}
