@@ -736,7 +736,7 @@ By selecting an exam term, the client creates a new WebSocket connection which w
 A teacher can see the exam---exactly as it will be shown to students---right from the beginning. Furthermore, he is given the option to temporarily show the solution to any question. Until the moment the first student appears, he can also leave and therefore abort the exam. Whenever a student enters the exam, the teacher is sent a message containing all the necessary information. Since there can be more than one teacher watching over an exam, the message is actually sent to all of them. If any of these arrives late and identifies himself as a teacher, he is provided a list of students that are already present at the exam.
 
 After making sure that all students at the exam are also physically present in the same room---which can be verified by the application itself by checking IP addresses of all the users and ensuring they all share the same subnetwork mask---any of the teachers can ``hand out'' the tests. That entails setting the exam duration. If necessary, the timer can be later adjusted. Nonetheless, when the time runs out, the exam is finished and all users are forced to leave.
-Teachers may also decide to collect the tests early, which results in the same.
+Teachers may also decide to collect the tests early, which has the same results.
 
       \subsubsection{Taking exams}
 
@@ -754,9 +754,19 @@ For a long time it was thought that people cheated by employing a rational cost/
 
 Ariely discovered this truth by constructing a set of experiments with group of students from the universities of MIT and Yale. The participants sat in a classroom-like setting and were given tests. To create an incentive, the students were also given a certain amount of money for every right answer. Each of the experiments was then held under different conditions---making the cheating either less or more possible. In the end, Ariely found that given the chance, lots of people cheated---even if just a little.
 
-Ariely then conducted another experiment, only this time the students had to sign a statement that said: ``I understand that this experiment falls under the guidelines of the MIT/Yale honor code.'' The act of signing resulted in zero cheating, and this was true even though neither university actually has an honor code. As Ariely concluded from this line of his research, ``recalling moral standards at the time of temptation can work wonders to decrease dishonest behavior and potentially prevent it altogether.''
+Ariely then conducted another experiment, only this time the students had to sign a statement that said: ``I understand that this experiment falls under the guidelines of the MIT/Yale honor code.'' The act of signing resulted in zero cheating, and this was true even though neither university actually has an honor code. As Ariely concluded from this line of his research, ``recalling moral standards at the time of temptation can work wonders to decrease dishonest behavior and potentially prevent it altogether.'' Reminding the student that there is such a thing as the Ethical codex will hopefully have a similar effect.
+
+Upon entering the exam, the menu is hidden and every attempt at navigating elsewhere manually is forbidden. The student is not allowed to see the test until a teacher ``hands it out.'' When that happens, he is notified and told the time at which the exam ends. During the exam, the time left is visible in the form of a timer which calculates the value internally using the function \code{setInterval()}. Even though the single-threaded nature of JavaScript and the inherent imprecision of its timing functions does not allow us to utilize the function directly to count the time, it can be used to periodically compare the current timestamp against the time of the exam's start. That way, we can obtain a fairly precise data that can be displayed to the user. To confuse the timer, the user might try to change the system time of his computer, which would work---but only locally. The end of the exam is determined exclusively by the timer running on the server. When that runs out, every user is forced to leave despite the time shown on their local timers.
+
+The moment the user starts to answer the questions, his responses are sent to the resource \code{api/exam/\{subject\}/\{date\}/\{language\}/\{uid\}} using the \code{PUT} method and backed up in the database. This process is handled by a set of event listeners that are attached to each of the questions and which react to input. In order not to flood the server, the so called debouncing is employed. It refers to a technique where a function is run only if a defined amount of time has passed since the last time it has been called.
+
+A student can also ``hand in'' the test early, if he wishes to. The data is then prepared in the same way as in the process of creating a blueprint---canvases are transformed into SVG strings and snippets are stripped of any HTML. The result is then sent to the server and if successfully stored, the student is notified and redirected to the homepage, his navigation rights returned.
 
       \subsubsection{Cheating prevention}
+
+Hopefully not an omnipresent factor, cheating still has to be taken into account---there are several ways the student could take advantage of the fact that the exam is taken on computer, even in the case of a restricted network access. In order to prevent---and possibly discourage---the student from any attempt at cheating, two different techniques are used.
+
+The first one employs the \code{blur} event of the \code{window} object, which is fired whenever the page with the application loses focus---either because the tabs in the browser were switched or because the browser itself lost focus.
 
 
 
