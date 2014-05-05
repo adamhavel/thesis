@@ -94,13 +94,11 @@
 
 \setsecnumdepth{all}
 
-\chapter{Analysis}
-
 \chapter{Realization}
 
   \section{Architecture}
 
-The application structure is based on a concept that is usually referred to as the MEAN stack. This name reflects the various technologies used to create a fully operational web application. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
+The application structure is based on a concept that is usually referred to as the MEAN stack---a name that reflects the various technologies used to create web applications that operate on both the server and client side. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
 
 \textit{Express} is a \textit{Node.js} web application framework, designed specifically for building single-page applications. It provides a higher-level abstraction of the native \textit{Node.js} API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
 
@@ -114,29 +112,76 @@ The common thread to all these distinct technologies is the fact that they all e
 
 The server part of the application is written entirely in \textit{Node.js} and its main focus is to provide access to the database by means of an API, to handle real-time communication between users using the WebSocket protocol, and to serve static files containing the client application.
 
-    \subsection{Components}
-
       ...
 
     \subsection{Database}
 
-      ...
+Using \textit{MongoDB} as the database allows us to define stored objects in a
 
-      \subsubsection{Data model}
+      \subsubsection{Data models}
 
-      ...
+The key decision when designing data models for \textit{MongoDB} revolves around the structure of documents and their relationships between each other. There are essentially two ways how to approach these relationships: references and embedded documents.
+
+References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both, if it proves useful or efficient.
+
+The application contains three data models: blueprints, exams and users. A blueprint represent what in real life would be the original copy of a written test. The figure \ref{fig:blueprint_schema} displays the Mongoose schema that defines blueprints in the database. The schema reveals that blueprints hold an array of sections which take the form of embedded documents. Each of these sections then contains yet another array of questions. The reason why we specifically have to define the schema for questions and not for the other sub-documents will be explained shortly.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+var BlueprintSchema = new Schema({
+  subject: String,
+  date: Date,
+  lang: String,
+  lede: String,
+  sections: [
+    {
+      name: String,
+      lede: String,
+      points: Number,
+      questions: [QuestionSchema]
+    }
+  ]
+});
+
+BlueprintSchema.index({
+  'subject': 1,
+  'date': -1,
+  'lang': 1
+});
+
+var QuestionSchema = new Schema({
+  name: String,
+  points: Number,
+  body: [
+    {
+      datatype: String,
+      lang: String,
+      content: Schema.Types.Mixed
+    }
+  ],
+  answer: [
+    {
+      datatype: String,
+      lang: String,
+      content: Schema.Types.Mixed,
+      solution: Schema.Types.Mixed
+    }
+  ]
+});
+  \end{lstlisting}
+  \caption{Blueprint schema}
+  \label{fig:blueprint_schema}
+\end{figure}
 
     \subsection{Internal communication}
 
-The communication between the client and the server can take place on two different levels. The first one depends on the server's public API that exposes access to a set of resources. These are fetched by the client using asynchronous XHR-type requests. The other one is represented by a full-duplex WebSocket connection that allows real-time communication between users---the server serving as an intermediary.
+The communication between the client and the server can take place on two different levels. The first one depends on the server's public API that provides access to a set of resources. These are fetched by the client using asynchronous XHR-type requests. The other one is represented by a full-duplex WebSocket connection that allows real-time communication between users---the server serving as an intermediary.
 
       \subsubsection{API}
 
 The server-side API essentially represents a doorway to the database, each of the available resource mirroring a collection in the store. Since it is not meant to be consumed by any other application---not in the current revision anyway---its purpose is limited to being the link between the client and the server. The API is therefore designed primarily to conform to this goal, and while based on the principles of REST, it cannot be considered RESTful. For that to be true, the resources would have to be represented as hypermedia, which would in turn render the API self-discoverable. In the current form, the client must have knowledge of the API structure and available methods in advance.
 
-Access to the API is forbidden unless authenticated, and depending on the resource and parameters provided, an additional authorization layer might be present. Some resources are available just to privileged users or only when certain conditions are met. An example of a resource---as defined by \textit{Express}---can be seen in the figure \ref{fig:resource_example}, including the authorization middleware function. The behavior of a resource is specified by supplying a sequence of functions for all HTTP methods that are available for the given resource. In order to be considered a middleware, these functions must possess the signature \code{(req, res, next)}---\code{req} represents the request that started the sequence, \code{res} can be used to set and send a response, and \code{next} points at the next function in line. If an error occurs, the current middleware can abort the sequence and send an error message via the \code{res} object. If not, the request is passed along to the next middleware by calling \code{next()}. In the end, the last function in the sequence should send some kind of response back to the client.
-
-
+Access to the API is forbidden unless authenticated, and depending on the resource and parameters provided, an additional authorization layer might be present. Some resources are available just to privileged users or only when certain conditions are met. An example of a resource---as defined by \textit{Express}---can be seen in the figure \ref{fig:resource_example}, including the authorization middleware function. A resource's behavior can be specified by creating a sequence of such functions for each of the HTTP methods the resource allows. In order to be considered a middleware, these functions must possess the signature \code{(req, res, next)} where \code{req} represents the request that started the sequence, \code{res} can be used to set and send a response, and \code{next} points at the next function in line. If an error occurs, the current middleware can abort the sequence and send an error message via the \code{res} object. If not, the request is passed along to the next middleware by calling \code{next()}. In the end, the last function in the sequence should send some kind of response back to the client.
 
 \begin{figure}
   \begin{lstlisting}[language=JavaScript]
@@ -168,15 +213,17 @@ module.exports = function(app) {
 
       \subsubsection{Websockets}
 
-The WebSocket protocol is a web technology that provides a full-duplex communication channel over a single persistent TCP connection, without the overhead of HTTP headers and cookies. This is made possible by introducing a standardized way in which the server can push content to the client without being requested, and by allowing for messages to be passed back and forth while keeping the connection open.
+The WebSocket protocol is a web technology that provides a full-duplex communication channel over a single persistent TCP connection, without the overhead of HTTP headers and cookies. This is made possible by introducing a standardized way in which the server can push content to the client without being requested, and by allowing to pass messages back and forth while keeping the connection open.
 
 \textit{Socket.IO} is an event-driven library that is employed to further expand upon the basic functionality of WebSocket. Although it can be used simply as a wrapper around the protocol---to bring WebSocket-like functionality to older browsers by means of fallbacks---it also provides otherwise unavailable features such as broadcasting to multiple sockets or storing data associated with each client. The library has two parts: one that runs in the browser, and other that requires a \textit{Node.js} server.
 
 The protocol is primarily utilized for handling ongoing exams. The moment a user enters an exam, a new WebSocket connection is established. The user then identifies himself to the server which in turn stores the user's credentials alongside the socket that handles this particular communication. The socket has its own identifier and contains additional information about the connection such as the client's IP address. After that, the user is allowed to join a room that holds the same name as the exam he is taking---room being a concept introduced by \textit{Socket.IO}. There can be many rooms and each represents an ongoing exam which allows us to broadcast messages only to a relevant subset of users.
 
-When a user reloads the page that holds the connection or closes the browser, the socket is lost. It is therefore necessary to check the user's credentials against the already stored users whenever a new socket is made. If a match is found, the server compares the socket that has been saved alongside the matching user with the socket handling the communication. If not equal, the old socket is replaced with the new one.
+When a user reloads the page that holds the connection or closes the browser, the socket is lost. It is therefore necessary to check the user's credentials against the already stored users whenever a new socket is made. If a match is found, the server compares the socket that has been saved alongside the matching user with the socket handling the communication. If not equal, the old socket is replaced with the new one. That way, a one-to-one mapping between users and sockets is ensured.
 
-\begin{figure}[h]
+During an ongoing exam, the server must handle communication between users present at the exam which entails processing incoming messages, and if necessary, sending or broadcasting messages to a particular user or a subset of users---usually defined by their roles. An example of a message handler is shown in the figure \ref{fig:socketio_event}. In this case the server receives a \code{exam:start} message from a user and in return starts an internal timer and notifies all users in the relevant room by sending a message with the value \code{exam:started}. When the timer runs out, a \code{exam:finished} prompt is periodically sent until no user remains in the room. When a user receives this message, he leaves the exam and sends a confirmation to the server which responds by finally removing the user from the list.
+
+\begin{figure}
   \begin{lstlisting}[language=JavaScript]
 socket.on('exam:start', function(data) {
   var exam = {
@@ -211,6 +258,10 @@ socket.on('exam:start', function(data) {
 
 
     \subsection{Integration of external resources}
+
+    ...
+
+    \subsection{Installation}
 
     ...
 
@@ -717,11 +768,11 @@ Something similar to the 401-filled responses also occurs when a user is not aut
 
   \section{Blueprints}
 
-A blueprint represent what in real life would be the original copy of a written test. In the application, blueprints can be created, viewed and modified until the day of the exam. Quite obviously, all of these operations are allowed only for users that hold the role of a teacher. And even those can manage only the blueprints that belong to the courses they teach.
+Blueprints can be created, viewed and modified until the day of the exam. All of these operations are quite obviously allowed only for users that hold the role of a teacher, and even those can manage only the blueprints that belong to the courses they teach.
 
     \subsection{Resources}
 
-The blueprints are exposed as two resources, each of them designed for different use. The first one represents a collection of blueprints and is accessible via \code{/api/blueprints}. It supports optional query parameters for filtering by subject, date and language. When no subject is specified, the result is automatically filtered using the list of subjects contained in the \code{User} service. If, on the other hand, a subject is given, it is tested against the same list and if no match is found, the server responds with a 403 code. Otherwise, the query is passed along.
+Blueprints are exposed as two resources, each of them designed for different use. The first one represents a collection of blueprints and is accessible via \code{/api/blueprints}. It supports optional query parameters for filtering by subject, date and language. When no subject is specified, the result is automatically filtered using the list of subjects contained in the \code{User} service. If, on the other hand, a subject is given, it is tested against the same list and if no match is found, the server responds with a 403 code. Otherwise, the query is passed along.
 
 In the end, the resource returns a collection of all the blueprints in the database that satisfy the inherent or supplied conditions. Anyhow, since the resource is used only for listings on the client side, it is unreasonable to request the actual content of the blueprints. Sending just the basic information will suffice and anything more than that would be a waste of bandwidth. To trim the response, the client can use the optional parameter \code{fields}. It is available to all the resources the API provides and when given, it prompts the server to return only the specified fields.
 
