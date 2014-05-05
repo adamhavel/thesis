@@ -112,7 +112,7 @@ The common thread to all these distinct technologies is the fact that they all e
 
   \section{Server}
 
-The server part of the application is written entirely in \textit{Node.js} and its main focus is to provide access to the database by means of an API, to handle real-time communication between users, and to serve static files containing the client application.
+The server part of the application is written entirely in \textit{Node.js} and its main focus is to provide access to the database by means of an API, to handle real-time communication between users using the WebSocket protocol, and to serve static files containing the client application.
 
     \subsection{Components}
 
@@ -128,11 +128,11 @@ The server part of the application is written entirely in \textit{Node.js} and i
 
     \subsection{Internal communication}
 
-      ...
+The communication between the client and the server can operate on two different levels. The first one depends on the server's public API that exposes access to a set of resources. These are fetched by the client using asynchronous XHR-type requests. The other one is represented by a full-duplex WebSocket connection that allows real-time communication between users---the server serving as an intermediary.
 
       \subsubsection{API}
 
-      ...
+The server-side API essentially represents a doorway to the database, each of the available resource mirroring a collection in the store. Since it is not meant to be consumed by any other application---not in the current revision anyway---its purpose is limited to being the link between the client and the server. The API is therefore designed primarily to conform to this goal, and while based on the principles of REST, it cannot be considered RESTful. For that to be true, the resources would have to be represented as hypermedia, which would in turn render the API self-discoverable. In the current form, the client must have knowledge of the API structure and available methods in advance.
 
       \subsubsection{Websockets}
 
