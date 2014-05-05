@@ -128,17 +128,87 @@ The server part of the application is written entirely in \textit{Node.js} and i
 
     \subsection{Internal communication}
 
-The communication between the client and the server can operate on two different levels. The first one depends on the server's public API that exposes access to a set of resources. These are fetched by the client using asynchronous XHR-type requests. The other one is represented by a full-duplex WebSocket connection that allows real-time communication between users---the server serving as an intermediary.
+The communication between the client and the server can take place on two different levels. The first one depends on the server's public API that exposes access to a set of resources. These are fetched by the client using asynchronous XHR-type requests. The other one is represented by a full-duplex WebSocket connection that allows real-time communication between users---the server serving as an intermediary.
 
       \subsubsection{API}
 
 The server-side API essentially represents a doorway to the database, each of the available resource mirroring a collection in the store. Since it is not meant to be consumed by any other application---not in the current revision anyway---its purpose is limited to being the link between the client and the server. The API is therefore designed primarily to conform to this goal, and while based on the principles of REST, it cannot be considered RESTful. For that to be true, the resources would have to be represented as hypermedia, which would in turn render the API self-discoverable. In the current form, the client must have knowledge of the API structure and available methods in advance.
 
+Access to the API is forbidden unless authenticated, and depending on the resource and parameters provided, an additional authorization layer might be present. Some resources are available just to privileged users or only when certain conditions are met. An example of a resource---as defined by \textit{Express}---can be seen in the figure \ref{fig:resource_example}, including the authorization middleware function. The behavior of a resource is specified by supplying a sequence of functions for all HTTP methods that are available for the given resource. In order to be considered a middleware, these functions must possess the signature \code{(req, res, next)}---\code{req} represents the request that started the sequence, \code{res} can be used to set and send a response, and \code{next} points at the next function in line. If an error occurs, the current middleware can abort the sequence and send an error message via the \code{res} object. If not, the request is passed along to the next middleware by calling \code{next()}. In the end, the last function in the sequence should send some kind of response back to the client.
+
+
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+module.exports = function(app) {
+
+  function isAuthorized(req, res, next) {
+    if (req.params.subject && _.indexOf(req.user.subjects, req.params.subject) === -1) {
+      return res.send(403, 'Access forbidden');
+    }
+    next();
+  };
+
+  app.route('/api/blueprints')
+     .get(auth.isAuthenticated, isAuthorized, blueprints.query);
+
+  app.route('/api/blueprint/:subject/:date/:lang')
+     .get(auth.isAuthenticated, isAuthorized, blueprints.get)
+     .post(auth.isAuthenticated, auth.isTeacher, isAuthorized, blueprints.create);
+
+  app.param('subject', exams.validateSubject);
+  app.param('date', exams.validateDate);
+  app.param('lang', exams.validateLang);
+
+};
+  \end{lstlisting}
+  \caption{Example of a resource definition}
+  \label{fig:resource_example}
+\end{figure}
+
       \subsubsection{Websockets}
 
-      ...
+The WebSocket protocol is a web technology that provides a full-duplex communication channel over a single persistent TCP connection, without the overhead of HTTP headers and cookies. This is made possible by introducing a standardized way in which the server can push content to the client without being requested, and by allowing for messages to be passed back and forth while keeping the connection open.
 
-% The WebSocket protocol is a web technology providing full-duplex communications channels over a single persistent TCP connection.
+\textit{Socket.IO} is an event-driven library that is employed to further expand upon the basic functionality of WebSocket. Although it can be used simply as a wrapper around the protocol---to bring WebSocket-like functionality to older browsers by means of fallbacks---it also provides otherwise unavailable features such as broadcasting to multiple sockets or storing data associated with each client. The library has two parts: one that runs in the browser, and other that requires a \textit{Node.js} server.
+
+The protocol is primarily utilized for handling ongoing exams. The moment a user enters an exam, a new WebSocket connection is established. The user then identifies himself to the server which in turn stores the user's credentials alongside the socket that handles this particular communication. The socket has its own identifier and contains additional information about the connection such as the client's IP address. After that, the user is allowed to join a room that holds the same name as the exam he is taking---room being a concept introduced by \textit{Socket.IO}. There can be many rooms and each represents an ongoing exam which allows us to broadcast messages only to a relevant subset of users.
+
+When a user reloads the page that holds the connection or closes the browser, the socket is lost. It is therefore necessary to check the user's credentials against the already stored users whenever a new socket is made. If a match is found, the server compares the socket that has been saved alongside the matching user with the socket handling the communication. If not equal, the old socket is replaced with the new one.
+
+\begin{figure}[h]
+  \begin{lstlisting}[language=JavaScript]
+socket.on('exam:start', function(data) {
+  var exam = {
+    id: data.examId,
+    start: Date.now(),
+    duration: data.duration,
+    clock: setInterval(function() {
+      exam.timeLeft = exam.duration - (Date.now() - exam.start);
+      if (exam.timeLeft <= 0) {
+        if (io.sockets.clients(exam.id).length) {
+          io.sockets.in(exam.id).emit('exam:finished');
+        } else {
+          clearInterval(exam.clock);
+          _.remove(exams, function(item) {
+            return item.id === exam.id;
+          });
+        }
+      }
+    }, 1000)
+  };
+  exams.push(exam);
+  io.sockets.in(data.examId).emit('exam:started', {
+    start: exam.start,
+    duration: exam.duration
+  });
+});
+  \end{lstlisting}
+  \caption{Example of a \textit{Socket.IO} event}
+  \label{fig:socketio_event}
+\end{figure}
+
+
 
     \subsection{Integration of external resources}
 
