@@ -98,11 +98,23 @@
 
 \chapter{Realization}
 
+  \section{Architecture}
+
+The application structure is based on a concept that is usually referred to as the MEAN stack. This name reflects the various technologies used to create a fully operational web application. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
+
+\textit{Express} is a \textit{Node.js} web application framework, designed specifically for building single-page applications. It provides a higher-level abstraction of the native \textit{Node.js} API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
+
+\textit{MongoDB} is a document-oriented database system, classified as a NoSQL database which means the traditional table-based relational database structure is eschewed in favor of JSON documents with dynamic schemas. This in return makes the integration of data in certain types of applications easier and faster. While not perfect, \textit{MongoDB} is currently the most popular NoSQL solution.
+
+Last but not least, \textit{AngularJS} is a Google-maintained web application framework that is used in the client-side part of the application in order to augment it with model–view–controller capability. The framework adapts and extends traditional HTML to better serve dynamic content through two-way data-binding that allows for the automatic synchronization of models and views. As a result, \textit{AngularJS} de-emphasizes DOM manipulation and encourages loose coupling between presentation, data, and logic components. Using dependency injection, Angular brings traditional server-side services, such as view-dependent controllers, to client-side web applications. Consequently, much of the burden on the backend is reduced, leading to much lighter web applications.
+
+The common thread to all these distinct technologies is the fact that they all employ JavaScript in some way. The advantages that arise from using a uniform language throughout the entire application are considerable. It allows us to store JSON-like documents in the \textit{MongoDB} database, to write JSON queries on the \textit{Node.js}-based server, and to seamlessly pass JSON documents to the \textit{AngularJs} frontend. When the objects stored in the database are essentially identical to the objects the client application sees, development and testing become a lot easier. Even better, using the same syntax and objects the whole way through greatly reduces the barrier to understand the code.
+
   \section{Server}
 
-    \subsection{Architecture}
+The server part of the application is written entirely in \textit{Node.js} and its main focus is to provide access to the database by means of an API, to handle real-time communication between users, and to serve static files containing the client application.
 
-      \subsubsection{Structure}
+    \subsection{Components}
 
       ...
 
