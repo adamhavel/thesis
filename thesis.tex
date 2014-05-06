@@ -116,7 +116,7 @@ The common thread to all these distinct technologies is the fact that they all e
 
   \section{Server}
 
-The server part of the application is written entirely in \textit{Node.js} and its main focus is to provide access to the database by means of an API, to handle real-time communication between users using the WebSocket protocol, and to serve static files containing the client application.
+The server part of the application is written entirely in \textit{Node.js} and its main purpose is to provide access to the database by means of API, to handle real-time communication between users using the WebSocket protocol, and to serve static files containing the client application.
 
       ...
 
@@ -128,7 +128,7 @@ Using \textit{MongoDB} as the database allows us to define stored objects in a
 
 The key decision when designing data models for \textit{MongoDB} revolves around the structure of documents and their relationships between each other. There are essentially two ways how to approach these relationships: references and embedded documents.
 
-References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both, if it proves useful or efficient.
+References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so-called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both, if it proves useful or efficient.
 
 The application contains three data models: blueprints, exams and users. A blueprint represent what in real life would be the original copy of a written test. The figure \ref{fig:blueprint_schema} displays the \textit{Mongoose} schema that defines blueprints in the database. They are identified by a combination of a subject, a date and a language. The schema also reveals that blueprints hold an array of sections which take the form of embedded documents. Each of these sections then contains yet another array of questions. The reason why we specifically have to define the schema for questions and not for the other sub-documents will be explained shortly. The \code{Schema.Types.Mixed} type in the schema points at the fact that the structure of a content is not known beforehand, and can take many forms depending on the value of the \code{datatype} property.
 
@@ -321,17 +321,66 @@ When a user reloads the page that holds the connection or closes the browser, th
 
 During an ongoing exam, the server must handle communication between users present at the exam which entails processing incoming messages, and if necessary, sending or broadcasting messages to a particular user or a subset of users---usually defined by their roles. An example of a message handler is shown in the figure \ref{fig:socketio_event}. In this case the server receives a \code{exam:start} message from a user and in return starts an internal timer and notifies all users in the relevant room by sending a message with the value \code{exam:started}. When the timer runs out, a \code{exam:finished} prompt is periodically sent until no user remains in the room. When a user receives this message, he leaves the exam and sends a confirmation to the server which responds by finally removing the user from the list.
 
-
-
-
-
     \subsection{Integration of external resources}
 
-    ...
+The application uses two external resource: the faculty LDAP server running at \code{ldap.fit.cvut.cz} and the \textit{KOSapi} service which provides a REST API over the information system \textit{KOS}.
+
+      \subsubsection{LDAP authentication}
+
+The LDAP server is utilized as a means for secure authentication of users. To authenticate, a user enters his credentials in the application login form on the client side. These are then passed to the application server which in turns asks the LDAP server. This part of the communication is further handled by the \textit{Passport} library which can be used as an authentication middleware in the \textit{Express} route definitions. If the LDAP server finds a match it returns an object with information about the user in question---if it is the first time the user logs in, the information is also saved in the database (the process is described in more detail in chapter \ref{chap:processes}). To confirm the authentication, the server creates a session and saves it in a \textit{MongoDB}-backed session store. The session is then passed to the client where it takes the form of a cookie. From now on the client can use the cookie to automatically authenticate the user by sending it back. The server performs a lookup in the store to check if the given session exists and whether it has not yet expired. If both conditions are met, the user remains authenticated. The whole process is defined by a so-called strategy which can be seen in the figure \ref{fig:passport_strategy}.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+passport.use('ldap', new LDAPStrategy(
+  {
+    server: {
+      url: 'ldaps://ldap.fit.cvut.cz:636',
+      searchBase: 'ou=People,o=fit.cvut.cz',
+      searchFilter: '(uid={{username}})',
+      searchAttributes: ['cn','uid']
+    }
+  },
+  function(entry, done) {
+    User.findByIdAndUpdate(entry.uid, { lastLogin: new Date() }, function(err, user) {
+      if (err) {
+        return done(err);
+      }
+      if (!user) {
+        var newUser = {
+          _id: entry.uid,
+          name: entry.cn,
+          lastLogin: new Date()
+        };
+        User.create(newUser, function(err, user) {
+          if (err) {
+            return done(err);
+          }
+          return done(null, user);
+        });
+      } else {
+        return done(null, user);
+      }
+    });
+  }
+));
+  \end{lstlisting}
+  \caption{\textit{Passport} LDAP strategy}
+  \label{fig:passport_strategy}
+\end{figure}
+
+      \subsubsection{KOSapi}
+
+\textit{KOSapi} allows us to traverse resources in the information system \textit{KOS} but to access it, some kind of authorization is mandatory. To fulfill the requirement, yet another faculty service is used. This time, it is the OAuth 2.0 authorization server running at \code{auth.fit.cvut.cz/oauth}. The server provides different types of authorization, also known as grants. One of those are the so-called client credentials---these are obtained by registering the application in the authorization server application manager located at \code{auth.fit.cvut.cz/manager}. The application then sends an access token request to the endpoint located at \code{auth.fit.cvut.cz/oauth/oauth/token} along with the credentials. If granted, the token is saved and used to access \textit{KOSapi} until the time it expires. When that happens, another token has to be requested.
 
     \subsection{Installation}
 
-    ...
+In order to be able to install and run the application properly, several prerequisites are necessary. The obvious requirement is that the \textit{Node.js} server application has been installed on the system. The package manager called \textit{npm} comes automatically with the server and can be used to install further dependencies. This is done by calling \code{npm install} while in the root folder of the application---\textit{npm} then looks in the \code{package.json} definition file and install all packages listed there into the \code{node\_modules} folder. The packages are furthermore divided into two groups: those the application requires to run and those that are needed for development.
+
+Another dependence is yet another manager called \textit{Bower} which is used solely for management of front-end packages. It can be installed using the command \code{npm install -g bower}. The \code{-g} flag ensures that the manager is installed globally and can be used from the command line. The required libraries are listed in the file \code{bower.json} and can be installed by typing \code{bower install} while in the root folder of the application. If successful, they can be found in the folder \code{public/lib}.
+
+In order to continue with development of the application, another two requirements must be fulfilled. The first one entails installing \textit{grunt}, a JavaScript task runner that automatically performs repetitive tasks like minification of style sheets, concatenation of scripts, code linting, and so on. It can be installed by calling \code{npm install -g grunt-cli}. The other requirement is a locally running instance of \textit{MongoDB} that can provide a database for testing purposes.
+
+If properly installed, the application can be started by typing \code{grunt} in the root folder. A sequence of commands---defined in the \code{gruntfile.json} file---is then triggered and in the end, both the server and the application should be up and running. Whenever a change is made to any relevant files such as the style sheets or the server-side code, a set of tasks is performed---which tasks are run depends on the file in question---and if necessary, the server is restarted. If there is no need for further development and the goal is to simply start the server, running the command \code{node server/server.js} should suffice.
 
 \section{Client}
 
@@ -339,7 +388,7 @@ During an ongoing exam, the server must handle communication between users prese
 
   \subsection{Services}
 
-The core of the application lies in the so called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in \textit{AngularJS} like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
+The core of the application lies in the so-called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in \textit{AngularJS} like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so-called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
 Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, in order to provide information about their state to users. It is for these reasons that most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on the user role. That is why we want to know the role before creating instances of services a user might not be able to use anyway---and because the majority of the services also create event listeners, which would only pose as potential memory hogs.
 
@@ -494,7 +543,7 @@ var circleHandler = {
   \label{fig:tool_handler}
 \end{figure}
 
-The tools provide means for drawing basic shapes on the canvas and manipulate them as needed. This is achieved by registering a set of listeners that operate on mouse events. Whenever a tool is activated, all event listeners previously applied to the canvas are removed and a new set, distinct for each of the tools, is added instead. An example of a tool handler can be seen in the figure \ref{fig:tool_handler}.
+The tools provide the means for drawing basic shapes on the canvas and manipulate them as needed. This is achieved by registering a set of listeners that operate on mouse events. Whenever a tool is activated, all event listeners previously applied to the canvas are removed and a new set, distinct for each of the tools, is added instead. An example of a tool handler can be seen in the figure \ref{fig:tool_handler}.
 
 If no content is given, the directive creates an object containing an empty array and an index set to zero. A clear canvas is then initialized and serialized into a JSON object using the library. This object is pushed into the hitherto empty array and after that, the whole package is fed to a \code{History} object, which represents the various states of the canvas. The moment the canvas is modified, it is once again serialized and the results get pushed into the array of states as before, while the index is raised by one. This essentially allows us to perform undo and redo operations on the canvas---both of which are provided through the public interface of the \code{History} object. The user can traverse the states back and forth, unless he makes a change to the canvas while in the middle of the list. When that happens, the array's tail is cut and with it all the states that were further down the list.
 
@@ -606,7 +655,7 @@ Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakp
 
   \subsection{Optimization}
 
-Front-end optimization refers to a set of techniques that are used to enhance the performance and efficiency of any application running in browser. These include  minifying the style sheet, reducing the amount of HTTP requests, the concatenation of scripts, the so called lazy loading of resources, and many others.
+Front-end optimization refers to a set of techniques that are used to enhance the performance and efficiency of any application running in browser. These include  minifying the style sheet, reducing the amount of HTTP requests, the concatenation of scripts, the so-called lazy loading of resources, and many others.
 
 The main bottleneck of browsing speed, as opposed to video streaming, is not network bandwidth but latency. Because of this and due to the inherent qualities of the HTTP/1.1 protocol, it is crucial to reduce the number of HTTP requests on the page by any means necessary. This will hold true until the new version of HTTP---based on the Google's \textit{SPDY} protocol---receives widespread adoption.
 
@@ -624,7 +673,7 @@ Taking the proposed use of the application into account, it is crucial to embrac
 
     \subsubsection{Flat or skeuomorphic?}
 
-As Dieter Rams once famously stated in his ten principles for good design (sometimes understandably referred to as the ``Ten commandments''), ``good design is as little design possible.'' And even though Rams dealt mostly with product design, the statement is applicable everywhere. Less, but better---such design can concentrate on the essential aspects instead of burdening the product with non-essentials. In recent years, this minimalist approach has once again proved to be in good health when the so called ``flat'' design seized the reins of user interface design everywhere. The reason it is referred to as flat is because it removes any stylistic choices that give the illusion of three-dimensionality (such as drop shadows, gradients, or textures) and focuses on simple elements, typography and primary colors.
+As Dieter Rams once famously stated in his ten principles for good design (sometimes understandably referred to as the ``Ten commandments''), ``good design is as little design possible.'' And even though Rams dealt mostly with product design, the statement is applicable everywhere. Less, but better---such design can concentrate on the essential aspects instead of burdening the product with non-essentials. In recent years, this minimalist approach has once again proved to be in good health when the so-called ``flat'' design seized the reins of user interface design everywhere. The reason it is referred to as flat is because it removes any stylistic choices that give the illusion of three-dimensionality (such as drop shadows, gradients, or textures) and focuses on simple elements, typography and primary colors.
 
 In opposition to flat design lies what is called skeuomorphism. Essentially any interface using ornamental cues referring to an object in the physical world is said to be skeuomorphic. These cues are intended to help the user navigate the interface by creating a sense of familiarity. Among the many arguments against skeuomorphic design are those which state that skeuomorphic interface elements use metaphors that are more difficult to operate and take up more screen space than standard interface elements or that many users may have no experience with the original device they emulate. Also prevalent is the opinion that such design limits creativity by grounding the experience to physical counterparts.
 
@@ -685,7 +734,7 @@ Last on the list is \textit{Roboto}---a typeface developed by Google to serve as
 
 Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size and changing thus proportionally the rest of the layout.
 
-The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
+The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so-called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
 
 The golden mean with its proportion of 1:1.618 is an obvious choice, but there are many others, equally useful. One of the simplest is the musical fifth with a ratio of 3:2. When put into our scale, it generates a value of 1.5 \code{em}---a good starting point for line spacing, which will be covered in a moment. Nonetheless, we might find that our set of values is too sparse and does not cover all needs. The remedy is often to create a double-stranded scale, one that is based not on one but two numbers. Like the first one, the second number should not be arbitrary---line length, which in our case equals 42 \code{em}, is usually a good choice.
 
@@ -707,7 +756,7 @@ The golden mean with its proportion of 1:1.618 is an obvious choice, but there a
   \label{fig:vertical_rhythm_mixin}
 \end{figure}
 
-Another essential property is the already mentioned line spacing, also called leading. Using a value from the modular scale, it is set to be one and a half times of the font size. To further improve legibility, the leading of the body text is then chosen as the base for what is called the vertical rhythm---a principle of unifying the line heights of different elements so that each line, blank or not, can be expressed only as a multiple of this base. It is important to note that the base is no longer relative, i.e. expressed in \code{em}, but absolute. In the case of our body text with a font size of 16 pixels and line height set to 1.5 \code{em}, the base holds a value of 24 pixels. Multiples of this number are then used to define any line height, spacing or dimensions in the vertical direction. This is reflected in the style sheets, where except a few cases, every vertical \code{margin} or \code{padding} is expressed using the Sass mixin shown in the figure \ref{fig:vertical_rhythm_mixin}. The multipliers do not necessarily have to be integers but they should sum to a whole number. It is therefore allowed to have for example an element with margin of half the leading in both directions, since it adds up to one.
+Another essential property is the already mentioned line spacing, also-called leading. Using a value from the modular scale, it is set to be one and a half times of the font size. To further improve legibility, the leading of the body text is then chosen as the base for what is called the vertical rhythm---a principle of unifying the line heights of different elements so that each line, blank or not, can be expressed only as a multiple of this base. It is important to note that the base is no longer relative, i.e. expressed in \code{em}, but absolute. In the case of our body text with a font size of 16 pixels and line height set to 1.5 \code{em}, the base holds a value of 24 pixels. Multiples of this number are then used to define any line height, spacing or dimensions in the vertical direction. This is reflected in the style sheets, where except a few cases, every vertical \code{margin} or \code{padding} is expressed using the Sass mixin shown in the figure \ref{fig:vertical_rhythm_mixin}. The multipliers do not necessarily have to be integers but they should sum to a whole number. It is therefore allowed to have for example an element with margin of half the leading in both directions, since it adds up to one.
 
     \subsubsection{Colors}
 
@@ -742,7 +791,7 @@ As already mentioned, the main content is filled with an off-white color express
 
 To maintain a coherent visual identity, only the colors stated above and their variations are used throughout the application. The variations are created by means of two internal Sass functions: \code{ligthen()} and \code{darken()}. These functions take an original color as the first argument and an amount of change expressed in percentage as the second. The result is a color that is not different in hue from the original one---only the amount of white is augmented or reduced.
 
-Anyhow, everything written about colors so far holds especially true for the so called modal windows. These are utilized heavily in the application and can be used as another example to further expand upon the argument for the importance of colors.
+Anyhow, everything written about colors so far holds especially true for the so-called modal windows. These are utilized heavily in the application and can be used as another example to further expand upon the argument for the importance of colors.
 
     \subsubsection{Modals}
 
@@ -758,7 +807,7 @@ Another important aspect of modal windows is the fact that prompts tend to be ei
   \label{fig:modal}
 \end{figure}
 
-Furthermore, if possible, the user must be given a way to abort the action in question. This is usually accomplished by means of a cancel button. If present, it is also necessary to tell what is the primary action for given prompt. For example, when a modal warns the user he is about to delete something, the primary action is to cancel the removal. This is expressed in several ways. Visually, by emphasizing the cancel button and making the other, so called secondary action button less pronounced. Positionally, by placing the primary action button as the rightmost, which is the place the user is most likely going to click. And last, functionally, by binding it to the \code{enter} key.
+Furthermore, if possible, the user must be given a way to abort the action in question. This is usually accomplished by means of a cancel button. If present, it is also necessary to tell what is the primary action for given prompt. For example, when a modal warns the user he is about to delete something, the primary action is to cancel the removal. This is expressed in several ways. Visually, by emphasizing the cancel button and making the other, so-called secondary action button less pronounced. Positionally, by placing the primary action button as the rightmost, which is the place the user is most likely going to click. And last, functionally, by binding it to the \code{enter} key.
 
     \subsubsection{Icons}
 
@@ -779,6 +828,7 @@ Furthermore, if possible, the user must be given a way to abort the action in qu
 % Animations are a great way to enhance a user's experience with the application. They can help
 
 \chapter{Processes}
+\label{chap:processes}
 
   \section{Authentication}
 
@@ -786,7 +836,7 @@ No part of the system is accessible without authentication. Upon loading, the cl
 
     \subsection{Logging in}
 
-In the opposite case---either no session was found or it has already expired---the server responds with a 401 status code which forces the client to show the user to a login form. After filling in the form, the client makes a new request to the \code{api/user} resource, this time using the \code{POST} method, sending along user credentials. These credentials are then checked against a faculty LDAP server running at \code{ldap.fit.cvut.cz} using a secure connection. If user's identity is verified, the LDAP server responds with basic information about the user. Back at the application server, the database is queried for additional data using the user identifier. It either finds a relevant entry or not. In the former case, the entry is updated with a new timestamp, representing the last login time, and the server sends it to the client as a JSON object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
+In the opposite case---either no session was found or it has already expired---the server responds with a 401 status code which forces the client to show the user to a login form. After filling in the form, the client makes a new request to the \code{api/user} resource, this time using the \code{POST} method, sending along user credentials. These credentials are then checked against the faculty LDAP server running at \code{ldap.fit.cvut.cz} using a secure connection. If user's identity is verified, the LDAP server responds with basic information about the user. Back at the application server, the database is queried for additional data using the user identifier. It either finds a relevant entry or not. In the former case, the entry is updated with a new timestamp, representing the last login time, and the server sends it to the client as a JSON object, the same as before. If the latter is the case, it means that the user is logging in for the first time.
 
 \begin{figure}
   \setlength\fboxsep{0pt}
@@ -959,7 +1009,7 @@ Ariely then conducted another experiment, only this time the students had to sig
 
 Upon entering the exam, the menu is hidden and every attempt at navigating elsewhere manually is forbidden. The student is not allowed to see the test until a teacher ``hands it out.'' When that happens, he is notified and told the time at which the exam ends. During the exam, the time left is visible in the form of a timer which calculates the value internally using the function \code{setInterval()}. Even though the single-threaded nature of JavaScript and the inherent imprecision of its timing functions does not allow us to utilize the function directly to count the time, it can be used to periodically compare the current timestamp against the time of the exam's start. That way, we can obtain a fairly precise data that can be displayed to the user. To confuse the timer, the user might try to change the system time of his computer, which would work---but only locally. The end of the exam is determined exclusively by the timer running on the server. When that runs out, every user is forced to leave despite the time shown on their local timers.
 
-The moment the user starts to answer the questions, his responses are sent to the resource \code{api/exam/\{subject\}/\{date\}/\{language\}/\{uid\}} using the \code{PUT} method and backed up in the database. This process is handled by a set of event listeners that are attached to each of the questions and which react to input. In order not to flood the server, the so called debouncing is employed. It refers to a technique where a function is run only if a defined amount of time has passed since the last time it has been called.
+The moment the user starts to answer the questions, his responses are sent to the resource \code{api/exam/\{subject\}/\{date\}/\{language\}/\{uid\}} using the \code{PUT} method and backed up in the database. This process is handled by a set of event listeners that are attached to each of the questions and which react to input. In order not to flood the server, the so-called debouncing is employed. It refers to a technique where a function is run only if a defined amount of time has passed since the last time it has been called.
 
 A student can also ``hand in'' the test early, if he wishes to. The data is then prepared in the same way as in the process of creating a blueprint---canvases are transformed into SVG strings and snippets are stripped of any HTML. The result is then sent to the server and if successfully stored, the student is notified and redirected to the homepage, his navigation rights returned.
 
