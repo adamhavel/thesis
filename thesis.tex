@@ -100,7 +100,7 @@
 
 The application structure is based on a concept that is usually referred to as the MEAN stack---a name that reflects the various technologies used to create web applications that operate on both the server and client side. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
 
-\textit{Express} is a \textit{Node.js} web application framework which provides a higher-level abstraction of the native \textit{Node.js} request handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
+\textit{Express} is a \textit{Node.js} web application framework which provides a higher-level abstraction of the native \textit{Node.js} request-handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
 
 \textit{MongoDB} is a document-oriented database system, classified as a NoSQL database which means the traditional table-based relational database structure is eschewed in favor of JSON documents with dynamic schemas. This in return makes the integration of data in certain types of applications easier and faster. While not perfect, \textit{MongoDB} is currently the most popular NoSQL solution.
 
@@ -112,13 +112,15 @@ Last but not least, \textit{AngularJS} is a Google-maintained web application fr
   \label{fig:architecture}
 \end{figure}
 
-The common thread to all these distinct technologies is the fact that they all employ JavaScript in some way. The advantages that arise from using a uniform language throughout the entire application are considerable. It allows us to store JSON-like documents in the \textit{MongoDB} database, to write JSON queries on the \textit{Node.js}-based server, and to seamlessly pass JSON documents to the \textit{AngularJs} frontend. When the objects stored in the database are essentially identical to the objects the client application sees, development and testing become a lot easier. Even better, using the same syntax and objects the whole way through greatly reduces the barrier to understand the code.
+The common thread to all these distinct technologies is JavaScript which they all employ in some way. The advantages that arise from using a uniform language throughout the entire application are considerable. It allows us to store JSON-like documents in the \textit{MongoDB} database, to write JSON queries on the \textit{Node.js}-based server, and to seamlessly pass JSON documents to the \textit{AngularJs} frontend. When the objects stored in the database are essentially identical to the objects the client application sees, development and testing become a lot easier. Even better, using the same syntax and objects the whole way through greatly reduces the barrier to understand the code.
 
   \section{Server}
 
 The server part of the application is written entirely in \textit{Node.js} and its main purpose is to provide access to the database by means of API, to handle real-time communication between users using the WebSocket protocol, and to serve static files containing the client application.
 
-      ...
+The static files are physically located in the \code{public} folder. However, when served, they must be accessed relative to the application root URL. Any request that does not point at a static resource such as an image or a style sheet is redirected to the file \code{public/index.html} which holds the \textit{AngularJS} application---the routing is then handled by the client. An exception to this rule is the server's API which is located at \code{/api}. Such requests are further processed by the server.
+
+The server-side code is logically divided into three categories. The first one stands for models which are the data models used both in the database and in the application. The second category are routes that are used to define endpoints for resources. Their behavior is then provided by controllers which represent the last group.
 
     \subsection{Database}
 
@@ -128,7 +130,7 @@ Using \textit{MongoDB} as the database allows us to define stored objects in a
 
 The key decision when designing data models for \textit{MongoDB} revolves around the structure of documents and their relationships between each other. There are essentially two ways how to approach these relationships: references and embedded documents.
 
-References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so-called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both, if it proves useful or efficient.
+References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so-called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both if it proves useful or efficient.
 
 The application contains three data models: blueprints, exams and users. A blueprint represent what in real life would be the original copy of a written test. The figure \ref{fig:blueprint_schema} displays the \textit{Mongoose} schema that defines blueprints in the database. They are identified by a combination of a subject, a date and a language. The schema also reveals that blueprints hold an array of sections which take the form of embedded documents. Each of these sections then contains yet another array of questions. The reason why we specifically have to define the schema for questions and not for the other sub-documents will be explained shortly. The \code{Schema.Types.Mixed} type in the schema points at the fact that the structure of a content is not known beforehand, and can take many forms depending on the value of the \code{datatype} property.
 
@@ -661,9 +663,9 @@ The main bottleneck of browsing speed, as opposed to video streaming, is not net
 
 The first step usually entails concatenating all JavaScript libraries and client-side code into one file and minifying the result. Because loading an external JavaScript is a blocking operation---unless loaded asynchronously---it is a good idea to place the \code{script} element that refers the resulting code bundle as the last item of the \code{body} element. That way, the HTML and CSS can start loading first.
 
-In order not to waste bandwidth, any code that is not essential for the main functionality of the application is loaded only if demanded. This is for example the case for the \textit{Fabric.js} library---downloading 204 kB of possibly unnecessary code might be fine while browsing on a home network, but not so much on a mobile data plan.
+In order not to waste bandwidth, any code that is not essential for running the application is loaded only on demand. This is for example the case for the \textit{Fabric.js} library---downloading 204 kB of possibly unnecessary code might be fine while browsing on a home network, but not so much on a mobile data plan.
 
-...
+And although minification helps considerably reduce the size of a style sheet, a more drastic measure can be taken in order to scale it down even further. While indispensable, grid systems tend to require a great amount of class definitions, most of it never used. There is therefore no harm in removing the ones not used from the style sheet---the same applies for any other needless CSS declaration. The process can be automated by loading the application in \textit{PhantomJS}, a WebKit-based headless browser that supports DOM handling and CSS selection. Each declaration in the style sheet is tried against the DOM and if no match is found, the declaration is omitted. Using this technique, the size of the style sheet can be reduced by more than 50 \%.
 
 \section{Interface}
 
