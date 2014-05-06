@@ -1,7 +1,5 @@
 \documentclass[thesis=M,english,hidelinks]{FITthesis}[2012/10/20]
 
-
-
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
@@ -9,12 +7,6 @@
 \usepackage{inconsolata}
 \usepackage{tgpagella}
 \usepackage{PTSans}
-
-% \DisemulatePackage{setspace}
-% \usepackage{setspace}
-% \onehalfspacing
-
-% \OnehalfSpacing
 
 \linespread{1.32}
 
@@ -64,12 +56,9 @@
 
 \usepackage{graphicx}
 \graphicspath{{img/}}
-% \usepackage{subfig} %subfigures
 
 \usepackage{dirtree}
-
-% % list of acronyms
-% %\usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
+\usepackage{url}
 
 \department{Department of Software Engineering}
 \title{Application for Creating, Taking and Evaluating Written Exams}
@@ -78,7 +67,7 @@
 \author{Adam Havel}
 \authorWithDegrees{Bc. Adam Havel}
 \supervisor{doc. Ing. Tomáš Vitvar, Ph.D.}
-\acknowledgements{THANKS}
+\acknowledgements{}
 \abstractEN{}
 \abstractCS{}
 \placeForDeclarationOfAuthenticity{Prague}
@@ -98,13 +87,13 @@
 
   \section{Architecture}
 
-The application structure is based on a concept that is usually referred to as the MEAN stack---a name that reflects the various technologies used to create web applications that operate on both the server and client side. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
+The application structure is based on a concept that is usually referred to as the MEAN stack---a name that reflects the various technologies used to create web applications that operate on both the server and client side. The core of the application is powered by \textit{Node.js} \cite{node}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
 
-\textit{Express} is a \textit{Node.js} web application framework which provides a higher-level abstraction of the native \textit{Node.js} request-handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
+\textit{Express} \cite{express} is a \textit{Node.js} web application framework which provides a higher-level abstraction of the native \textit{Node.js} request-handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
 
-\textit{MongoDB} is a document-oriented database system, classified as a NoSQL database which means the traditional table-based relational database structure is eschewed in favor of JSON documents with dynamic schemas. This in return makes the integration of data in certain types of applications easier and faster. While not perfect, \textit{MongoDB} is currently the most popular NoSQL solution.
+\textit{MongoDB} \cite{mongodb} is a document-oriented database system, classified as a NoSQL database which means the traditional table-based relational database structure is eschewed in favor of JSON documents with dynamic schemas. This in return makes the integration of data in certain types of applications easier and faster. While not perfect, \textit{MongoDB} is currently the most popular NoSQL solution.
 
-Last but not least, \textit{AngularJS} is a Google-maintained web application framework that is used in the client-side part of the application in order to augment it with model–view–controller capability. The framework adapts and extends traditional HTML to better serve dynamic content through two-way data-binding that allows for the automatic synchronization of models and views. As a result, \textit{AngularJS} de-emphasizes DOM manipulation and encourages loose coupling between presentation, data, and logic components. Furthermore, by using dependency injection, it brings traditional server-side services, such as view-dependent controllers, to client-side web applications. Consequently, much of the burden on the backend is reduced, leading to much lighter web applications.
+Last but not least, \textit{AngularJS} \cite{angularjs} is a Google-maintained web application framework that is used in the client-side part of the application in order to augment it with model–view–controller capability. The framework adapts and extends traditional HTML to better serve dynamic content through two-way data-binding that allows for the automatic synchronization of models and views. As a result, \textit{AngularJS} de-emphasizes DOM manipulation and encourages loose coupling between presentation, data, and logic components. Furthermore, by using dependency injection, it brings traditional server-side services, such as view-dependent controllers, to client-side web applications. Consequently, much of the burden on the backend is reduced, leading to much lighter web applications.
 
 \begin{figure}[h]
   \includegraphics[width=\textwidth]{architecture.png}
@@ -124,7 +113,7 @@ The server-side code is logically divided into three categories. The first one s
 
     \subsection{Database}
 
-Using \textit{MongoDB} as the database allows us to define stored objects in a
+Using \textit{MongoDB} as the database allows us to define stored objects in a \cite{mongoose}
 
       \subsubsection{Data models}
 
@@ -247,7 +236,7 @@ The communication between the client and the server can take place on two differ
 
       \subsubsection{API}
 
-The server-side API essentially represents a doorway to the database, each of the available resource mirroring a collection in the store. Since it is not meant to be consumed by any other application---not in the current revision anyway---its purpose is limited to being the link between the client and the server. The API is therefore designed primarily to conform to this goal, and while based on the principles of REST, it cannot be considered RESTful. For that to be true, the resources would have to be represented as hypermedia, which would in turn render the API self-discoverable. In the current form, the client must have knowledge of the API structure and available methods in advance.
+The server-side API essentially represents a doorway to the database, each of the available resource mirroring a collection in the store. Since it is not meant to be consumed by any other application---not in the current revision anyway---its purpose is limited to being the link between the client and the server. The API is therefore designed primarily to conform to this goal, and while based on the principles of REST, it cannot be considered RESTful \cite{rest}. For that to be true, the resources would have to be represented as hypermedia, which would in turn render the API self-discoverable. In the current form, the client must have knowledge of the API structure and available methods in advance.
 
 Access to the API is forbidden unless authenticated, and depending on the resource and parameters provided, an additional authorization layer might be present. Some resources are available just to privileged users or only when certain conditions are met. An example of a resource---as defined by \textit{Express}---can be seen in the figure \ref{fig:resource_example}, including the authorization middleware function. A resource's behavior can be specified by creating a sequence of such functions for each of the HTTP methods the resource allows. In order to be considered a middleware, these functions must possess the signature \code{(req, res, next)} where \code{req} represents the request that started the sequence, \code{res} can be used to set and send a response, and \code{next} points at the next function in line. If an error occurs, the current middleware can abort the sequence and send an error message via the \code{res} object. If not, the request is passed along to the next middleware by calling \code{next()}. In the end, the last function in the sequence should send some kind of response back to the client.
 
@@ -281,9 +270,9 @@ module.exports = function(app) {
 
       \subsubsection{Websockets}
 
-The WebSocket protocol is a web technology that provides a full-duplex communication channel over a single persistent TCP connection, without the overhead of HTTP headers and cookies. This is made possible by introducing a standardized way in which the server can push content to the client without being requested, and by allowing to pass messages back and forth while keeping the connection open.
+The WebSocket protocol \cite{websocket} is a web technology that provides a full-duplex communication channel over a single persistent TCP connection, without the overhead of HTTP headers and cookies. This is made possible by introducing a standardized way in which the server can push content to the client without being requested, and by allowing to pass messages back and forth while keeping the connection open.
 
-\textit{Socket.IO} is an event-driven library that is employed to further expand upon the basic functionality of WebSocket. Although it can be used simply as a wrapper around the protocol---to bring WebSocket-like functionality to older browsers by means of fallbacks---it also provides otherwise unavailable features such as broadcasting to multiple sockets or storing data associated with each client. The library has two parts: one that runs in the browser, and other that requires a \textit{Node.js} server.
+\textit{Socket.IO} \cite{socketio} is an event-driven library that is employed to further expand upon the basic functionality of WebSocket. Although it can be used simply as a wrapper around the protocol---to bring WebSocket-like functionality to older browsers by means of fallbacks---it also provides otherwise unavailable features such as broadcasting to multiple sockets or storing data associated with each client. The library has two parts: one that runs in the browser, and other that requires a \textit{Node.js} server.
 
 The protocol is primarily utilized for handling ongoing exams. The moment a user enters an exam, a new WebSocket connection is established. The user then identifies himself to the server which in turn stores the user's credentials alongside the socket that handles this particular communication. The socket has its own identifier and contains additional information about the connection such as the client's IP address. After that, the user is allowed to join a room that holds the same name as the exam he is taking---room being a concept introduced by \textit{Socket.IO}. There can be many rooms and each represents an ongoing exam which allows us to broadcast messages only to a relevant subset of users.
 
@@ -329,7 +318,7 @@ The application uses two external resource: the faculty LDAP server running at \
 
       \subsubsection{LDAP authentication}
 
-The LDAP server is utilized as a means for secure authentication of users. To authenticate, a user enters his credentials in the application login form on the client side. These are then passed to the application server which in turns asks the LDAP server. This part of the communication is further handled by the \textit{Passport} library which can be used as an authentication middleware in the \textit{Express} route definitions. If the LDAP server finds a match it returns an object with information about the user in question---if it is the first time the user logs in, the information is also saved in the database (the process is described in more detail in chapter \ref{chap:processes}). To confirm the authentication, the server creates a session and saves it in a \textit{MongoDB}-backed session store. The session is then passed to the client where it takes the form of a cookie. From now on the client can use the cookie to automatically authenticate the user by sending it back. The server performs a lookup in the store to check if the given session exists and whether it has not yet expired. If both conditions are met, the user remains authenticated. The whole process is defined by a so-called strategy which can be seen in the figure \ref{fig:passport_strategy}.
+The LDAP server is utilized as a means for secure authentication of users. To authenticate, a user enters his credentials in the application login form on the client side. These are then passed to the application server which in turns asks the LDAP server. This part of the communication is further handled by the \textit{Passport} library \cite{passport} which can be used as an authentication middleware in the \textit{Express} route definitions. If the LDAP server finds a match it returns an object with information about the user in question---if it is the first time the user logs in, the information is also saved in the database (the process is described in more detail in chapter \ref{chap:processes}). To confirm the authentication, the server creates a session and saves it in a \textit{MongoDB}-backed session store. The session is then passed to the client where it takes the form of a cookie. From now on the client can use the cookie to automatically authenticate the user by sending it back. The server performs a lookup in the store to check if the given session exists and whether it has not yet expired. If both conditions are met, the user remains authenticated. The whole process is defined by a so-called strategy which can be seen in the figure \ref{fig:passport_strategy}.
 
 \begin{figure}
   \begin{lstlisting}[language=JavaScript]
@@ -378,9 +367,9 @@ passport.use('ldap', new LDAPStrategy(
 
 In order to be able to install and run the application properly, several prerequisites are necessary. The obvious requirement is that the \textit{Node.js} server application has been installed on the system. The package manager called \textit{npm} comes automatically with the server and can be used to install further dependencies. This is done by calling \code{npm install} while in the root folder of the application---\textit{npm} then looks in the \code{package.json} definition file and install all packages listed there into the \code{node\_modules} folder. The packages are furthermore divided into two groups: those the application requires to run and those that are needed for development.
 
-Another dependence is yet another manager called \textit{Bower} which is used solely for management of front-end packages. It can be installed using the command \code{npm install -g bower}. The \code{-g} flag ensures that the manager is installed globally and can be used from the command line. The required libraries are listed in the file \code{bower.json} and can be installed by typing \code{bower install} while in the root folder of the application. If successful, they can be found in the folder \code{public/lib}.
+Another dependence is yet another manager called \textit{Bower} \cite{bower} which is used solely for management of front-end packages. It can be installed using the command \code{npm install -g bower}. The \code{-g} flag ensures that the manager is installed globally and can be used from the command line. The required libraries are listed in the file \code{bower.json} and can be installed by typing \code{bower install} while in the root folder of the application. If successful, they can be found in the folder \code{public/lib}.
 
-In order to continue with development of the application, another two requirements must be fulfilled. The first one entails installing \textit{grunt}, a JavaScript task runner that automatically performs repetitive tasks like minification of style sheets, concatenation of scripts, code linting, and so on. It can be installed by calling \code{npm install -g grunt-cli}. The other requirement is a locally running instance of \textit{MongoDB} that can provide a database for testing purposes.
+In order to continue with development of the application, another two requirements must be fulfilled. The first one entails installing \textit{grunt} \cite{grunt}, a JavaScript task runner that automatically performs repetitive tasks like minification of style sheets, concatenation of scripts, code linting, and so on. It can be installed by calling \code{npm install -g grunt-cli}. The other requirement is a locally running instance of \textit{MongoDB} that can provide a database for testing purposes.
 
 If properly installed, the application can be started by typing \code{grunt} in the root folder. A sequence of commands---defined in the \code{gruntfile.json} file---is then triggered and in the end, both the server and the application should be up and running. Whenever a change is made to any relevant files such as the style sheets or the server-side code, a set of tasks is performed---which tasks are run depends on the file in question---and if necessary, the server is restarted. If there is no need for further development and the goal is to simply start the server, running the command \code{node server/server.js} should suffice.
 
@@ -494,7 +483,7 @@ It is also necessary to provide a way to create and delete items from the list. 
 
       \subsubsection{Canvas}
 
-The most complex among the directives is the \code{icanvas}---a container around a \code{canvas} element that provides tools for editing the content. The directive is in fact not interacting with the canvas itself, but instead with a high-level abstraction that encapsulates the native low-level API the canvas provides. This is made possible by an external library \textit{Fabric.js}. Apart from giving us a more efficient way to manipulate the canvas' contents, the library also allows us to serialize the canvas either into a JSON object or a SVG image---and deserialize it back into a canvas if needed. This is essential if we want to store the resulting image into the database.
+The most complex among the directives is the \code{icanvas}---a container around a \code{canvas} element that provides tools for editing the content. The directive is in fact not interacting with the canvas itself, but instead with a high-level abstraction that encapsulates the native low-level API the canvas provides. This is made possible by the external library \textit{Fabric.js} \cite{fabricjs}. Apart from giving us a more efficient way to manipulate the canvas' contents, the library also allows us to serialize the canvas either into a JSON object or a SVG image---and deserialize it back into a canvas if needed. This is essential if we want to store the resulting image into the database.
 
 \begin{figure}
   \begin{lstlisting}[language=JavaScript]
@@ -600,11 +589,11 @@ The look and feel of the application is described using CSS style sheets. While 
 
     \subsubsection{Preprocessor}
 
-\textit{Sass} is the most natural choice, being the de facto solution for construction of complex style sheets. In contrast to vanilla CSS, the \textit{Sass} \code{@import} function is not called on runtime but during the compilation process. This allows us to create highly manageable structure of self-contained modules, using the principle of separation of concerns. Each of these modules can deal with different aspect of the presentation---one may be used to normalize various peculiarities among browsers, another can focus solely on typography or forms, and so on. Using \textit{Sass} also gives us the opportunity to employ variables, rule nesting, mixins, or selector inheritance---none of which are available in vanilla CSS.
+\textit{Sass} \cite{sass} is the most natural choice, being the de facto solution for construction of complex style sheets. In contrast to vanilla CSS, the \textit{Sass} \code{@import} function is not called on runtime but during the compilation process. This allows us to create highly manageable structure of self-contained modules, using the principle of separation of concerns. Each of these modules can deal with different aspect of the presentation---one may be used to normalize various peculiarities among browsers, another can focus solely on typography or forms, and so on. Using \textit{Sass} also gives us the opportunity to employ variables, rule nesting, mixins, or selector inheritance---none of which are available in vanilla CSS.
 
     \subsubsection{Methodology}
 
-When it comes to structuring the style sheets, it is always a good idea to choose some kind of methodology and stick to it if possible. \textit{BEM}---meaning block, element, modifier---is a front-end methodology that introduces a way for naming CSS classes to give them more transparency and meaning. It follows the pattern shown in the figure \ref{fig:bem_pattern}, where \code{.component} represents some sort of higher level abstraction, \code{component\_\_element} refers to its descendant that helps form it as a whole, and \code{.component--modifier} stands for a different state or version. The first block in the figure is written in \textit{Sass} notation while the second one shows what would be the output in vanilla CSS.
+When it comes to structuring the style sheets, it is always a good idea to choose some kind of methodology and stick to it if possible. \textit{BEM} \cite{bem}---meaning block, element, modifier---is a front-end methodology that introduces a way for naming CSS classes to give them more transparency and meaning. It follows the pattern shown in the figure \ref{fig:bem_pattern}, where \code{.component} represents some sort of higher level abstraction, \code{component\_\_element} refers to its descendant that helps form it as a whole, and \code{.component--modifier} stands for a different state or version. The first block in the figure is written in \textit{Sass} notation while the second one shows what would be the output in vanilla CSS.
 
 \begin{figure}[h]
   \begin{lstlisting}
@@ -659,7 +648,7 @@ Even though the breakpoints, defined as shown in the figure \ref{fig:sass_breakp
 
 Front-end optimization refers to a set of techniques that are used to enhance the performance and efficiency of any application running in browser. These include  minifying the style sheet, reducing the amount of HTTP requests, the concatenation of scripts, the so-called lazy loading of resources, and many others.
 
-The main bottleneck of browsing speed, as opposed to video streaming, is not network bandwidth but latency. Because of this and due to the inherent qualities of the HTTP/1.1 protocol, it is crucial to reduce the number of HTTP requests on the page by any means necessary. This will hold true until the new version of HTTP---based on the Google's \textit{SPDY} protocol---receives widespread adoption.
+The main bottleneck of browsing speed, as opposed to video streaming, is not network bandwidth but latency \cite{grigorik}. Because of this and due to the inherent qualities of the HTTP/1.1 protocol, it is crucial to reduce the number of HTTP requests on the page by any means necessary. This will hold true until the new version of HTTP---based on the Google's \textit{SPDY} protocol---receives widespread adoption.
 
 The first step usually entails concatenating all JavaScript libraries and client-side code into one file and minifying the result. Because loading an external JavaScript is a blocking operation---unless loaded asynchronously---it is a good idea to place the \code{script} element that refers the resulting code bundle as the last item of the \code{body} element. That way, the HTML and CSS can start loading first.
 
@@ -675,7 +664,7 @@ Taking the proposed use of the application into account, it is crucial to embrac
 
     \subsubsection{Flat or skeuomorphic?}
 
-As Dieter Rams once famously stated in his ten principles for good design (sometimes understandably referred to as the ``Ten commandments''), ``good design is as little design possible.'' And even though Rams dealt mostly with product design, the statement is applicable everywhere. Less, but better---such design can concentrate on the essential aspects instead of burdening the product with non-essentials. In recent years, this minimalist approach has once again proved to be in good health when the so-called ``flat'' design seized the reins of user interface design everywhere. The reason it is referred to as flat is because it removes any stylistic choices that give the illusion of three-dimensionality (such as drop shadows, gradients, or textures) and focuses on simple elements, typography and primary colors.
+As Dieter Rams once famously stated in his ten principles for good design (sometimes understandably referred to as the ``Ten commandments''), good design is as little design possible \cite{rams}. And even though Rams dealt mostly with product design, the statement is applicable everywhere. Less, but better---such design can concentrate on the essential aspects instead of burdening the product with non-essentials. In recent years, this minimalist approach has once again proved to be in good health when the so-called ``flat'' design seized the reins of user interface design everywhere. The reason it is referred to as flat is because it removes any stylistic choices that give the illusion of three-dimensionality (such as drop shadows, gradients, or textures) and focuses on simple elements, typography and primary colors.
 
 In opposition to flat design lies what is called skeuomorphism. Essentially any interface using ornamental cues referring to an object in the physical world is said to be skeuomorphic. These cues are intended to help the user navigate the interface by creating a sense of familiarity. Among the many arguments against skeuomorphic design are those which state that skeuomorphic interface elements use metaphors that are more difficult to operate and take up more screen space than standard interface elements or that many users may have no experience with the original device they emulate. Also prevalent is the opinion that such design limits creativity by grounding the experience to physical counterparts.
 
@@ -717,7 +706,7 @@ Notwithstanding the importance of aesthetic qualities, in the end, what matters 
   \label{fig:pt_sans}
 \end{figure}
 
-The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, as a way to provide a modern font that encompasses all characters contained within the many languages of Russian federation. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif, and one that possesses an enhanced legibility. While choosing a serif font family would make more sense for longer passages of text, in this case the content is expected to consist of rather short snippets, sans-serif family therefore makes a better choice and matches nicely with the streamlined aesthetics of the application.
+The first and probably most important decision is to pick the right typeface---one that hopefully reflects the qualities the product is trying to represent. In the case of this application, the choice came upon \textit{PT Sans}, a freely distributed font family that was released under the \textit{SIL Open Font License}. It was developed by a foundry called \textit{ParaType} under the sponsorship of the Russian government, as a way to provide a modern font that encompasses all characters contained within the many languages of Russian federation \cite{paratype}. It is a professional-grade typeface that combines traditional and conservative appearance with modern trends of humanistic sans-serif, and one that possesses an enhanced legibility. While choosing a serif font family would make more sense for longer passages of text, in this case the content is expected to consist of rather short snippets, sans-serif family therefore makes a better choice and matches nicely with the streamlined aesthetics of the application.
 
 When combining different typefaces, it is necessary to pick font families that share similar x-height, which is---not very surprisingly---the height of the letter \textit{x} in a given font. If one does not feel adventurous, it is generally a good idea to choose typefaces from the same superfamily. The result is a set of fonts that, while belonging to different classes like sans and serif, have a similar appearance and properties, such as the aforementioned x-height. It is for these reasons that \textit{PT Sans Narrow} nicely complements the body text typeface while used in headings---the contrast such combination creates helps further define the document structure visually.
 
@@ -736,7 +725,7 @@ Last on the list is \textit{Roboto}---a typeface developed by Google to serve as
 
 Choosing the right font sizes for different contexts is usually next on the list and should not be done haphazardly---the whole layout of the page is (or should be) affected by the typographic decisions made, not the other way around. This is true for two reasons: first, the layout width should be set in such a way that any given line of text does not contain much more than around 70 characters---the amount which is believed to provide the best legibility. And second, all layout dimensions should be expressed in a relation to the base font size---this actually makes the first point trivial to achieve and is the raison d'être of the \code{em} unit. The base font size is however best left set at the default value of 1 \code{em}, which usually renders as a font size of 16 pixels. The user can then decide herself whether to enlarge or reduce the font size and changing thus proportionally the rest of the layout.
 
-The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so-called modular scale. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
+The moment we want to add different font sizes to our mix, we find ourselves at a crossroad. We can travel the path of arbitrary, conventional or easily divisible numbers, or we can use the so-called modular scale \cite{brown}. Making such scale is quite straightforward---a set of values is generated by choosing a number and a ratio, and multiplying or dividing the first with the other. In our case, the number is the base font size. As for the ratio, any proportion might do, but it is probably a good idea to pick one that is rooted in geometry, music, nature or history. Such ratios are culturally relevant and meaningful, and also tried and proven by centuries of use. More importantly, they tend to produce visually pleasing compositions.
 
 The golden mean with its proportion of 1:1.618 is an obvious choice, but there are many others, equally useful. One of the simplest is the musical fifth with a ratio of 3:2. When put into our scale, it generates a value of 1.5 \code{em}---a good starting point for line spacing, which will be covered in a moment. Nonetheless, we might find that our set of values is too sparse and does not cover all needs. The remedy is often to create a double-stranded scale, one that is based not on one but two numbers. Like the first one, the second number should not be arbitrary---line length, which in our case equals 42 \code{em}, is usually a good choice.
 
@@ -762,7 +751,7 @@ Another essential property is the already mentioned line spacing, also-called le
 
     \subsubsection{Colors}
 
-The backdrop color has been chosen deliberately for its properties and effects on human mind. A light that is composed predominantly of the color blue has a direct and powerful influence on the secretion of melatonin, a hormone that regulates sleep patterns in mammals. So while it is generally a good idea to avoid blue light at night in order not to disturb one's sleep, the very same quality can be used during the day to effectively raise a person's alertness.
+The backdrop color has been chosen deliberately for its properties and effects on human mind. A light that is composed predominantly of the color blue has a direct and powerful influence on the secretion of melatonin, a hormone that regulates sleep patterns in mammals \cite{revell}. So while it is generally a good idea to avoid blue light at night in order not to disturb one's sleep, the very same quality can be used during the day to effectively raise a person's alertness \cite{viola}.
 
 \begin{figure}[h]
   \begin{lstlisting}
@@ -810,24 +799,6 @@ Another important aspect of modal windows is the fact that prompts tend to be ei
 \end{figure}
 
 Furthermore, if possible, the user must be given a way to abort the action in question. This is usually accomplished by means of a cancel button. If present, it is also necessary to tell what is the primary action for given prompt. For example, when a modal warns the user he is about to delete something, the primary action is to cancel the removal. This is expressed in several ways. Visually, by emphasizing the cancel button and making the other, so-called secondary action button less pronounced. Positionally, by placing the primary action button as the rightmost, which is the place the user is most likely going to click. And last, functionally, by binding it to the \code{enter} key.
-
-    \subsubsection{Icons}
-
-    ...
-
-\begin{figure}[H]
-  \setlength\fboxsep{0pt}
-  \setlength\fboxrule{0.2pt}
-  \fbox{\includegraphics[width=\textwidth]{icons.png}}
-  \caption{Example of icons}
-  \label{fig:icons}
-\end{figure}
-
-  \subsection{Performance}
-
-  ...
-
-% Animations are a great way to enhance a user's experience with the application. They can help
 
 \chapter{Processes}
 \label{chap:processes}
@@ -993,7 +964,7 @@ Teachers may also decide to collect the tests early, which has the same results.
 
       \subsubsection{Taking exams}
 
-A student can enter the exam only when a teacher is already present. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating.
+A student can enter the exam only when a teacher is already present. Before allowed further he is also shown a modal citing a passage from the Ethical codex of CTU in Prague which he has to acknowledge in order to continue. While seemingly a superfluous formality, the reasoning behind this step is actually quite complex. The idea is based on the research by Dan Ariely, professor of psychology and behavioral economics, who led a series of experiments on cheating \cite{ariely}.
 
 For a long time it was thought that people cheated by employing a rational cost/benefit analysis. When tempted to engage in an unethical behavior, they would weigh the chances of getting caught and the resulting punishment against the possible reward, and then act accordingly. However, experiments by Dr. Ariely and others have shown that far from being a deliberate, rational choice, dishonesty often results from psychological and environmental factors that people typically are not even aware of.
 
@@ -1025,8 +996,6 @@ Nonetheless, if applied by itself, a resourceful student still might think of a 
 
 To handle the aforementioned situation, a different technique is utilized. Whenever a student tries to resize the browser, an event is fired. The client application on the student's computer then calculates the usage of the screen which is achieved by dividing the available viewport of the computer (\code{window.screen.availWidth} × \code{window.screen.availHeight}) by the dimensions of the browser window (\code{window.outerWidth} × \code{window.outerHeight}). If under 100 \%, teachers are notified and shown a modal which informs them of the student in question and the percentage of screen covered by the browser. The same calculation also commences automatically at an exam start, in case a student resizes the screen in advance.
 
-
-
 \begin{figure}
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
@@ -1037,9 +1006,11 @@ To handle the aforementioned situation, a different technique is utilized. Whene
 
     \subsection{Evaluation}
 
-    ...
+When finished, exams should be evaluated as soon as possible. If the logged-in user is a teacher and there is an exam that belongs to his subject and has not yet been evaluated, the item in the navigation menu that corresponds to the state \code{Evaluate} is highlighted in order to point out the fact.
 
-\begin{figure}[H]
+After switching the state, the URL changes to \code{/evaluate} and the user is yet again presented with the already familiar listing. If necessary, the individual tests are grouped into exam terms and subjects. The only difference from the other listings lies in the fact that both unevaluated tests and groups that contain at least one of these are highlighted. This can be seen in the figure \ref{fig:listing}. When the user selects one of the tests, he enters an evaluation mode which can either be canceled or finished by evaluating the test.
+
+\begin{figure}
   \setlength\fboxsep{0pt}
   \setlength\fboxrule{0.2pt}
   \fbox{\includegraphics[width=\textwidth]{listing.png}}
@@ -1047,8 +1018,14 @@ To handle the aforementioned situation, a different technique is utilized. Whene
   \label{fig:listing}
 \end{figure}
 
+While evaluating, the user has the option to temporarily show the solution---if present---instead of the student's answer. Anyhow, each of the answers must be assigned a certain amount of points. These have an upper limit that was set while creating the blueprint for the exam, but no lower limit. The reason is to allow for special occasions where a teacher might consider giving a negative amount of points instead. Either way, when finished, the user can store the current evaluation and continue with other tests. If necessary, an exam test can also be re-evaluated which results in opening the finished evaluation, making additional changes, and then saving it as usual.
+
 \setsecnumdepth{part}
 \chapter{Conclusion}
+
+The application has successfully undergone the transformation from an abstract idea to a fully operational product. Nonetheless, one of the most important aspects of the development---testing the application with real users---still lies ahead. The absence of any usability testing could be also considered this work's greatest deficiency. Such testing would hopefully support the many ideas and opinions stated and introduced but alas, time would not hear about it.
+
+And it is one
 
 
 \bibliographystyle{iso690}
@@ -1078,14 +1055,10 @@ To handle the aforementioned situation, a different technique is utilized. Whene
 
 \begin{figure}
    \dirtree{%
-      .1 readme.txt\DTcomment{the file with CD contents description}.
-      .1 exe\DTcomment{the directory with executables}.
       .1 src\DTcomment{the directory of source codes}.
-      .2 wbdcm\DTcomment{implementation sources}.
       .2 thesis\DTcomment{the directory of \LaTeX{} source codes of the thesis}.
       .1 text\DTcomment{the thesis text directory}.
       .2 thesis.pdf\DTcomment{the thesis text in PDF format}.
-      .2 thesis.ps\DTcomment{the thesis text in PS format}.
    }
 \end{figure}
 
