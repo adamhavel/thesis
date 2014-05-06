@@ -100,11 +100,17 @@
 
 The application structure is based on a concept that is usually referred to as the MEAN stack---a name that reflects the various technologies used to create web applications that operate on both the server and client side. The core of the application is powered by \textit{Node.js}---a platform built on \textit{Google V8} JavaScript runtime that allows building fast and scalable network applications. It uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.
 
-\textit{Express} is a \textit{Node.js} web application framework, designed specifically for building single-page applications. It provides a higher-level abstraction of the native \textit{Node.js} request handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
+\textit{Express} is a \textit{Node.js} web application framework which provides a higher-level abstraction of the native \textit{Node.js} request handling API and it is used primarily for its routing capabilities. \textit{Express} automatically parses requests sent to the server and prepares appropriate responses. These are usually constructed by means of middleware which allows us to easily share functionality---such as an authentication layer---among different routes.
 
 \textit{MongoDB} is a document-oriented database system, classified as a NoSQL database which means the traditional table-based relational database structure is eschewed in favor of JSON documents with dynamic schemas. This in return makes the integration of data in certain types of applications easier and faster. While not perfect, \textit{MongoDB} is currently the most popular NoSQL solution.
 
 Last but not least, \textit{AngularJS} is a Google-maintained web application framework that is used in the client-side part of the application in order to augment it with model–view–controller capability. The framework adapts and extends traditional HTML to better serve dynamic content through two-way data-binding that allows for the automatic synchronization of models and views. As a result, \textit{AngularJS} de-emphasizes DOM manipulation and encourages loose coupling between presentation, data, and logic components. Furthermore, by using dependency injection, it brings traditional server-side services, such as view-dependent controllers, to client-side web applications. Consequently, much of the burden on the backend is reduced, leading to much lighter web applications.
+
+\begin{figure}[h]
+  \includegraphics[width=\textwidth]{architecture.png}
+  \caption{Application architecture}
+  \label{fig:architecture}
+\end{figure}
 
 The common thread to all these distinct technologies is the fact that they all employ JavaScript in some way. The advantages that arise from using a uniform language throughout the entire application are considerable. It allows us to store JSON-like documents in the \textit{MongoDB} database, to write JSON queries on the \textit{Node.js}-based server, and to seamlessly pass JSON documents to the \textit{AngularJs} frontend. When the objects stored in the database are essentially identical to the objects the client application sees, development and testing become a lot easier. Even better, using the same syntax and objects the whole way through greatly reduces the barrier to understand the code.
 
@@ -124,7 +130,7 @@ The key decision when designing data models for \textit{MongoDB} revolves around
 
 References store the relationships between data by including links or references from one document to another. The application can resolve these references later and access the related data. Using references properly results in the so called normalized data models. Embedding documents, on the other hand, means storing related data in a single document structure. \textit{MongoDB} documents make it possible to embed document structures as sub-documents in a field or array within a document. These denormalized data models allow the application to retrieve and manipulate related data in a single database operation. In the end, each of these approaches has its merit and there is no reason not to employ a combination of both, if it proves useful or efficient.
 
-The application contains three data models: blueprints, exams and users. A blueprint represent what in real life would be the original copy of a written test. The figure \ref{fig:blueprint_schema} displays the Mongoose schema that defines blueprints in the database. The schema reveals that blueprints hold an array of sections which take the form of embedded documents. Each of these sections then contains yet another array of questions. The reason why we specifically have to define the schema for questions and not for the other sub-documents will be explained shortly.
+The application contains three data models: blueprints, exams and users. A blueprint represent what in real life would be the original copy of a written test. The figure \ref{fig:blueprint_schema} displays the \textit{Mongoose} schema that defines blueprints in the database. They are identified by a combination of a subject, a date and a language. The schema also reveals that blueprints hold an array of sections which take the form of embedded documents. Each of these sections then contains yet another array of questions. The reason why we specifically have to define the schema for questions and not for the other sub-documents will be explained shortly. The \code{Schema.Types.Mixed} type in the schema points at the fact that the structure of a content is not known beforehand, and can take many forms depending on the value of the \code{datatype} property.
 
 \begin{figure}
   \begin{lstlisting}[language=JavaScript]
@@ -171,6 +177,66 @@ var QuestionSchema = new Schema({
   \end{lstlisting}
   \caption{Blueprint schema}
   \label{fig:blueprint_schema}
+\end{figure}
+
+Exams stand for students' test, they are therefore closely connected to blueprints. One approach would be to embed the original blueprint into every related exam but given the fact that blueprints usually hold more data than exams, the overhead would be too great. It is therefore more sensible to use references---in this case defined as the \code{\_blueprint} property which links the blueprint in question by means of a \code{Schema.Types.ObjectId} identifier that contains the \code{\_id} property of the linked document.
+
+Looking at \code{ExamSchema} in the figure \ref{fig:exam_schema} reveals that apart from holding a student's fingerprint as an embedded document, an exam also contains the array \code{answers}. While confusing at first, each of these answers actually represents the same structure as the items in blueprints' \code{questions}. Only the \code{body} property is stripped and the \code{asnwer} is renamed in order to take its place. We must also reference the original question using the \code{\_question} property, since the answers no longer fall withing sections---as they do in blueprints. This helps when linking the two together and means that we do not have to rely on the items' order in the arrays. It is also the reason why we have to define \code{QuestionSchema}---otherwise, we would not be able to reference questions in exams. When set in this manner, the server can replace the references with actual data by using the \textit{Moongoose} command \code{populate()} whenever a client requests an exam.
+
+Another point of interest is the property \code{evaluted} which allows the application to tell whether an exam has been evaluated or not---it contains either \code{null} or a sub-document with information about the evaluation itself such as its author.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+var ExamSchema = new Schema({
+  student: {
+    name: String,
+    id: String
+  },
+  _blueprint: {
+    type: Schema.Types.ObjectId,
+    ref: 'Blueprint'
+  },
+  evaluated: { type: Schema.Types.Mixed, default: null },
+  subject: String,
+  date: Date,
+  lang: String,
+  answers: [
+    {
+      _question: {
+        type: Schema.Types.ObjectId,
+        ref: 'Question'
+      },
+      body: [Schema.Types.Mixed],
+      points: { type: Number, default: 0 },
+    }
+  ]
+});
+
+ExamSchema.index({
+  'subject': 1,
+  'date': -1,
+  'lang': 1,
+  'student.id': 1
+});
+  \end{lstlisting}
+  \caption{Exam schema}
+  \label{fig:exam_schema}
+\end{figure}
+
+The last distinct collection in the database consists of users. An entry is created whenever a user logs in the application for the first time. The associated data is then stored using the schema in the figure \ref{fig:user_schema}. Unlike the previous schemata, \code{UserSchema} overrides the native \code{\_id} property---normally holding an \code{ObjectID} value---with a string holding the user's unique identifier, defined in the university information system \textit{KOS}.
+
+\begin{figure}
+  \begin{lstlisting}[language=JavaScript]
+var UserSchema = new Schema({
+  _id: String,
+  name: String,
+  role: String,
+  subjects: [String],
+  lastLogin: Date
+});
+  \end{lstlisting}
+  \caption{User schema}
+  \label{fig:user_schema}
 \end{figure}
 
     \subsection{Internal communication}
