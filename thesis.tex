@@ -67,19 +67,23 @@
 \author{Adam Havel}
 \authorWithDegrees{Bc. Adam Havel}
 \supervisor{doc. Ing. Tomáš Vitvar, Ph.D.}
-\acknowledgements{}
+\acknowledgements{I would like to thank my friends and family for understanding my being absent and most of all, my girlfriend for many an encouraging word.}
 \abstractEN{}
 \abstractCS{}
 \placeForDeclarationOfAuthenticity{Prague}
 \keywordsCS{Replace with comma-separated list of keywords in Czech.}
 \keywordsEN{Replace with comma-separated list of keywords in English.}
-\declarationOfAuthenticityOption{1} %select as appropriate, according to the desired license (integer 1-6)
+\declarationOfAuthenticityOption{1}
 \settocdepth{subsection}
 
 \begin{document}
 
 \setsecnumdepth{part}
 \chapter{Introduction}
+
+The application described in this text started as an idea to enhance the process of creating exam tests for the subjects \code{MI-MDW} and \code{MI-W20}, taught at the Czech Technical University in Prague. While possibly successful at making the process more efficient, the final product would still be rooted in the physical world and restricted in potential. After exploring options and pushing the boundaries of the original assignment, the idea was therefore further developed into what could be considered the complete solution to the process of creating, taking and evaluating exams. The goal was to build an application that would prove useful and that would eventually reach an audience that is wider than the one set by its assignment.
+
+This work's goal, on the other hand, is to describe the implementation of the application in just enough detail while focusing on the issues that were deemed important during the development. A great emphasis is put on explaining the choices that were made while designing the application which should hopefully lead to a better understanding of the final product.
 
 \setsecnumdepth{all}
 
@@ -375,11 +379,9 @@ If properly installed, the application can be started by typing \code{grunt} in 
 
 \section{Client}
 
-  ...
-
   \subsection{Services}
 
-The core of the application lies in the so-called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in \textit{AngularJS} like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so-called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
+The core of the client application lies in the so-called services which are objects that are used to organize code into logical units and which are wired together using dependency injections to create new functionality. They are built upon services already present in \textit{AngularJS} like \code{\$http} or \code{\$resource}  and are instantiated only when another component depends on them. The so-called service factory then generates a single instance and provides a reference. Any other component that might require the same service will receive a reference to the same instance. Using this feature, data can be easily shared between different parts of the application.
 
 Much of the core functionality is handled by aptly named services such as \code{ExamTake} or \code{NewBlueprint}. The user interface controller actually depends on many of these, in order to provide information about their state to users. It is for these reasons that most of the services get instantiated right at the initial load. Nonetheless, some of them are used only by a subset of users, depending on the user role. That is why we want to know the role before creating instances of services a user might not be able to use anyway---and because the majority of the services also create event listeners, which would only pose as potential memory hogs.
 
@@ -581,7 +583,7 @@ canvas.on('object:modified', function() {
 
   \subsection{Routing}
 
-  ...
+The framework utilized for handling routing on the client is \textit{AngularUI Router}. It is organized around states, which may optionally have routes---as well as other behavior---attached, unlike the normally used \code{\$route} service which is organized around routes only and which depends on URL.
 
   \subsection{Style sheets}
 
@@ -1027,7 +1029,7 @@ The application has successfully undergone the transformation from an abstract i
 
 Further development---which is already taking on momentum---will hopefully lead to an application that is more complex and flexible, but that still remains accessible, and most importantly---useful. Among the many features planned for future, at least a few can be named. Foremost, it is paramount to expand the current list of available content types in order to adapt the application for a wider range of use: tables and mathematical expressions come to mind first, followed by more specific cases such as UML diagrams. Enhancing the server's API would be next in line---making it truly RESTful would help any application consuming the provided resources.
 
-Notwithstanding the features, the application  during the test that  the process of putting it in production.
+However, one must not forget that in the end, the only proper way to judge the application's usefulness is only after the process of putting it in production is complete.
 
 
 \bibliographystyle{iso690}
